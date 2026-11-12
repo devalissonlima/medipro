@@ -3,20 +3,22 @@ import { persist, createJSONStorage } from "zustand/middleware"
 import type { Measurement, MeasurementStatus } from "@/types/measurement"
 import { generateShareableToken } from "@/utils/calculations"
 
-const INITIAL_MEASUREMENTS: Measurement[] = [
+export const INITIAL_MEASUREMENTS: Measurement[] = [
   {
     id: "med-001",
     title: "Instalação Cozinha Ilha & Gourmet - Apto 82",
     date: "2026-11-10",
     location: "Residencial Alphaville Zero - Santana de Parnaíba/SP",
-    clientId: "cli-003",
-    clientName: "Dr. Roberto Martins (Residência Alphaville)",
-    collaboratorId: "colab-001",
+    clientId: "cli-001",
+    clientName: "Dr. Roberto Martins",
+    projectId: "proj-001",
+    projectTitle: "Residencial Alphaville Zero - Cozinha & Gourmet",
+    collaboratorId: "usr_member_001",
     collaboratorName: "Lucas Ferraz",
     collaboratorAvatar:
       "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
     isTeamContext: true,
-    leaderId: "usr_mock_001",
+    leaderId: "usr_manager_001",
     items: [
       {
         id: "item-101",
@@ -67,13 +69,15 @@ const INITIAL_MEASUREMENTS: Measurement[] = [
     date: "2026-11-11",
     location: "Condomínio Tamboré 10 - Casa 42",
     clientId: "cli-002",
-    clientName: "Arq. Camila Vasconcellos Interiores",
-    collaboratorId: "colab-003",
+    clientName: "Arq. Camila Vasconcellos",
+    projectId: "proj-002",
+    projectTitle: "Condomínio Tamboré 10 - Suíte Master",
+    collaboratorId: "usr_member_002",
     collaboratorName: "Tiago Santos",
     collaboratorAvatar:
       "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=150&auto=format&fit=crop&q=80",
     isTeamContext: true,
-    leaderId: "usr_mock_001",
+    leaderId: "usr_manager_001",
     items: [
       {
         id: "item-201",
@@ -112,14 +116,16 @@ const INITIAL_MEASUREMENTS: Measurement[] = [
     title: "Polimento & Bancadas Hall de Entrada",
     date: "2026-11-08",
     location: "Edifício Horizon Corporate - Itaim Bibi/SP",
-    clientId: "cli-001",
+    clientId: "cli-003",
     clientName: "Construtora Silva & Ramos",
-    collaboratorId: "colab-002",
+    projectId: "proj-003",
+    projectTitle: "Edifício Horizon & Quinta da Baroneza",
+    collaboratorId: "usr_supervisor_001",
     collaboratorName: "Marcos Oliveira",
     collaboratorAvatar:
       "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
     isTeamContext: true,
-    leaderId: "usr_mock_001",
+    leaderId: "usr_manager_001",
     items: [
       {
         id: "item-301",
@@ -162,13 +168,15 @@ const INITIAL_MEASUREMENTS: Measurement[] = [
     date: "2026-11-04",
     location: "Av. Barão de Itapura, 1500 - Campinas/SP",
     clientId: "cli-004",
-    clientName: "Eng. Marcos Pontes (Ed. Grand Plaza)",
-    collaboratorId: "colab-004",
+    clientName: "Eng. Marcos Pontes",
+    projectId: "proj-004",
+    projectTitle: "Ed. Grand Plaza Campinas - Lavabos",
+    collaboratorId: "usr_member_004",
     collaboratorName: "Rafael Silveira",
     collaboratorAvatar:
       "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80",
     isTeamContext: true,
-    leaderId: "usr_mock_001",
+    leaderId: "usr_manager_001",
     items: [
       {
         id: "item-401",
@@ -206,14 +214,16 @@ const INITIAL_MEASUREMENTS: Measurement[] = [
     title: "Assentamento Área Gourmet & Piscina",
     date: "2026-11-11",
     location: "Residencial Quinta da Baroneza - Bragança/SP",
-    clientId: "cli-001",
+    clientId: "cli-003",
     clientName: "Construtora Silva & Ramos",
-    collaboratorId: "colab-001",
+    projectId: "proj-003",
+    projectTitle: "Edifício Horizon & Quinta da Baroneza",
+    collaboratorId: "usr_member_001",
     collaboratorName: "Lucas Ferraz",
     collaboratorAvatar:
       "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
     isTeamContext: true,
-    leaderId: "usr_mock_001",
+    leaderId: "usr_manager_001",
     items: [
       {
         id: "item-501",
@@ -249,6 +259,40 @@ const INITIAL_MEASUREMENTS: Measurement[] = [
     shareableUrlToken: "med-nov26-baroneza",
     createdAt: "2026-11-11T16:00:00Z",
   },
+  {
+    id: "med-solo-001",
+    title: "Bancada Cozinha & Soleiras Apartamento Jardins",
+    date: "2026-11-09",
+    location: "Rua Oscar Freire, 980 - Jardins/SP",
+    clientId: "cli-001",
+    clientName: "Dr. Roberto Martins",
+    projectId: "proj-solo-001",
+    projectTitle: "Reforma Apartamento Jardins - Cozinha",
+    collaboratorId: "usr_solo_001",
+    collaboratorName: "João Autônomo",
+    isTeamContext: false,
+    items: [
+      {
+        id: "item-solo-1",
+        serviceId: "srv-005",
+        serviceName: "Instalação de Ilha Gourmet & Bancada",
+        materialName: "Silestone Stellar Snow",
+        unit: "unidade",
+        quantity: 2,
+        unitPrice: 450.0,
+        subtotal: 900.0,
+      },
+    ],
+    operationalCosts: {
+      transport: 90.0,
+    },
+    servicesTotal: 900.0,
+    costsTotal: 90.0,
+    grandTotal: 990.0,
+    status: "approved",
+    shareableUrlToken: "med-nov26-jardins-solo",
+    createdAt: "2026-11-09T13:00:00Z",
+  },
 ]
 
 interface MeasurementsState {
@@ -277,6 +321,7 @@ interface MeasurementsState {
   setNotification: (
     notification: { message: string; type: "success" | "info" | "error" } | null
   ) => void
+  ensureSeedData: () => void
 }
 
 export const useMeasurementsStore = create<MeasurementsState>()(
@@ -411,9 +456,18 @@ export const useMeasurementsStore = create<MeasurementsState>()(
       closeShareModal: () => set({ shareModalMeasurement: null }),
 
       setNotification: (notification) => set({ notification }),
+
+      ensureSeedData: () => {
+        const current = get().measurements
+        const existingIds = new Set(current.map((m) => m.id))
+        const missing = INITIAL_MEASUREMENTS.filter((m) => !existingIds.has(m.id))
+        if (missing.length > 0) {
+          set({ measurements: [...current, ...missing] })
+        }
+      },
     }),
     {
-      name: "@medipro:measurements-data",
+      name: "@medipro:measurements-data-v2",
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         measurements: state.measurements,

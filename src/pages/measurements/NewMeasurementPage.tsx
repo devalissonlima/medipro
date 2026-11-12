@@ -7,10 +7,13 @@ import {
   Plus,
   Ruler,
   Search,
+  FolderKanban,
+  AlertTriangle,
 } from "lucide-react"
 import { PageContainer } from "@/components/shared/PageContainer"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Select } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -34,12 +37,18 @@ export function NewMeasurementPage() {
   const { services: catalogServices } = useServicesStore()
 
   const {
+    isEditing,
+    isApproved,
     title,
     setTitle,
     date,
     setDate,
     location,
     setLocation,
+    projectId,
+    handleSelectProject,
+    availableProjects,
+    requiresProjectSelection,
     clientId,
     clientName,
     setClientId,
@@ -64,9 +73,10 @@ export function NewMeasurementPage() {
   const [isServicePickerOpen, setIsServicePickerOpen] = useState(false)
   const [servicePickerSearch, setServicePickerSearch] = useState("")
 
-  const filteredCatalog = catalogServices.filter((s) =>
-    s.name.toLowerCase().includes(servicePickerSearch.toLowerCase()) ||
-    s.category.toLowerCase().includes(servicePickerSearch.toLowerCase())
+  const filteredCatalog = catalogServices.filter(
+    (s) =>
+      s.name.toLowerCase().includes(servicePickerSearch.toLowerCase()) ||
+      s.category.toLowerCase().includes(servicePickerSearch.toLowerCase())
   )
 
   const handleSelectService = (service: ServiceItem) => {
@@ -75,8 +85,8 @@ export function NewMeasurementPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50/60 pb-24">
-      <PageContainer className="max-w-5xl space-y-6">
+    <div className="flex flex-col min-h-full bg-slate-50/60">
+      <PageContainer className="flex-1 max-w-5xl space-y-6 pb-6">
         {/* Top Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-200 pb-5">
           <div className="flex items-center gap-3">
@@ -92,18 +102,41 @@ export function NewMeasurementPage() {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-                  Nova Medição & Orçamento
+                  {isEditing ? "Editar Medição" : "Nova Medição & Orçamento"}
                 </h1>
-                <Badge className="bg-amber-500 text-slate-950 font-bold hover:bg-amber-400 text-[10px]">
-                  Cálculo Instantâneo
+                <Badge
+                  className={`text-[10px] font-bold ${
+                    isEditing
+                      ? "bg-blue-600 text-white"
+                      : "bg-amber-500 text-slate-950 hover:bg-amber-400"
+                  }`}
+                >
+                  {isEditing ? "Modo de Edição" : "Cálculo Instantâneo"}
                 </Badge>
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
-                Lance os serviços e metragens executadas na obra para emissão de relatório e aprovação.
+                {isEditing
+                  ? "Altere itens, metragens ou salve como rascunho antes de enviar para conferência."
+                  : "Lance os serviços e metragens executadas na obra para emissão de relatório e aprovação."}
               </p>
             </div>
           </div>
         </div>
+
+        {/* Alerta de Medição Aprovada (Bloqueio de Edição) */}
+        {isApproved && (
+          <div className="flex items-center gap-2.5 rounded-xl border border-amber-300 bg-amber-50 p-4 text-xs text-amber-900 font-medium">
+            <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0" />
+            <div>
+              <p className="font-bold text-amber-950">
+                Esta medição já foi aprovada e liquidada!
+              </p>
+              <p className="text-[11px] text-amber-800">
+                Para manter a integridade dos pagamentos e da auditoria financeira, medições com status aprovado não podem mais sofrer alterações.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* BLOCO 1: Identificação & Vínculo */}
         <Card className="border-slate-200/90 shadow-2xs bg-white">
@@ -125,6 +158,7 @@ export function NewMeasurementPage() {
                 <Input
                   placeholder="Ex: Instalação Cozinha Ilha & Gourmet - Apto 82"
                   value={title}
+                  disabled={isApproved}
                   onChange={(e) => setTitle(e.target.value)}
                   className={`bg-white ${
                     errors.title ? "border-rose-400 focus-visible:ring-rose-400" : ""
@@ -146,6 +180,7 @@ export function NewMeasurementPage() {
                 <Input
                   type="date"
                   value={date}
+                  disabled={isApproved}
                   onChange={(e) => setDate(e.target.value)}
                   className="bg-white"
                 />
@@ -153,19 +188,85 @@ export function NewMeasurementPage() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 pt-1">
-              {/* Destinatário / Vínculo de Cliente (7 cols) */}
-              <div className="sm:col-span-7">
-                <ClientSelector
-                  clientId={clientId}
-                  clientName={clientName}
-                  isTeamContext={isTeamContext}
-                  error={errors.client}
-                  onSelectClient={(id, name) => {
-                    setClientId(id)
-                    setClientName(name)
-                  }}
-                  onToggleTeamContext={setIsTeamContext}
-                />
+              {/* Seleção de Projeto */}
+              <div className="sm:col-span-7 space-y-1.5">
+                {requiresProjectSelection ? (
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                      <FolderKanban className="h-3.5 w-3.5 text-amber-600" />
+                      Vincular a qual Projeto? <span className="text-rose-500">*</span>
+                    </label>
+                    <Select
+                      value={projectId}
+                      disabled={isApproved}
+                      onChange={(e) => handleSelectProject(e.target.value)}
+                      className={`bg-white ${
+                        errors.project ? "border-rose-400 focus-visible:ring-rose-400" : ""
+                      }`}
+                    >
+                      <option value="">
+                        {availableProjects.length > 0
+                          ? "Selecione a obra onde você está alocado..."
+                          : "Nenhum projeto ativo encontrado para seu usuário"}
+                      </option>
+                      {availableProjects.map((proj) => (
+                        <option key={proj.id} value={proj.id}>
+                          {proj.title} {proj.clientName ? `(${proj.clientName})` : ""}
+                        </option>
+                      ))}
+                    </Select>
+                    {errors.project && (
+                      <p className="text-[11px] text-rose-500 font-medium">
+                        {errors.project}
+                      </p>
+                    )}
+                    {clientName && (
+                      <p className="text-[11px] text-slate-500">
+                        Cliente da obra: <strong className="text-slate-700">{clientName}</strong>
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {availableProjects.length > 0 && (
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                          <FolderKanban className="h-3.5 w-3.5 text-amber-600" />
+                          Vincular a um Projeto (Opcional)
+                        </label>
+                        <Select
+                          value={projectId}
+                          disabled={isApproved}
+                          onChange={(e) => handleSelectProject(e.target.value)}
+                          className="bg-white h-9 text-xs"
+                        >
+                          <option value="">Sem vínculo específico de obra</option>
+                          {availableProjects.map((proj) => (
+                            <option key={proj.id} value={proj.id}>
+                              {proj.title}
+                            </option>
+                          ))}
+                        </Select>
+                      </div>
+                    )}
+
+                    <ClientSelector
+                      clientId={clientId}
+                      clientName={clientName}
+                      isTeamContext={isTeamContext}
+                      error={errors.client}
+                      onSelectClient={(id, name) => {
+                        if (isApproved) return
+                        setClientId(id)
+                        setClientName(name)
+                      }}
+                      onToggleTeamContext={(val) => {
+                        if (isApproved) return
+                        setIsTeamContext(val)
+                      }}
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Local / Endereço da Obra (5 cols) */}
@@ -177,6 +278,7 @@ export function NewMeasurementPage() {
                 <Input
                   placeholder="Ex: Condomínio Tamboré 10, Casa 42"
                   value={location}
+                  disabled={isApproved}
                   onChange={(e) => setLocation(e.target.value)}
                   className="bg-white"
                 />
@@ -195,14 +297,16 @@ export function NewMeasurementPage() {
               Serviços, Materiais & Metragens ({items.length})
             </CardTitle>
 
-            <Button
-              type="button"
-              onClick={() => setIsServicePickerOpen(true)}
-              className="gap-2 bg-slate-900 text-white hover:bg-slate-800 text-xs font-semibold h-9 px-3.5 shadow-sm"
-            >
-              <Plus className="h-4 w-4 text-amber-400" />
-              Adicionar Serviço
-            </Button>
+            {!isApproved && (
+              <Button
+                type="button"
+                onClick={() => setIsServicePickerOpen(true)}
+                className="gap-2 bg-slate-900 text-white hover:bg-slate-800 text-xs font-semibold h-9 px-3.5 shadow-sm"
+              >
+                <Plus className="h-4 w-4 text-amber-400" />
+                Adicionar Serviço
+              </Button>
+            )}
           </CardHeader>
 
           <CardContent className="p-5 space-y-3">
@@ -225,15 +329,17 @@ export function NewMeasurementPage() {
                     Clique em "+ Adicionar Serviço" para selecionar itens do catálogo base (cortes, assentamento, polimento).
                   </p>
                 </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsServicePickerOpen(true)}
-                  className="text-xs border-slate-300 text-slate-800 hover:bg-slate-100 gap-1.5"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  Selecionar do Catálogo de Serviços
-                </Button>
+                {!isApproved && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsServicePickerOpen(true)}
+                    className="text-xs border-slate-300 text-slate-800 hover:bg-slate-100 gap-1.5"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    Selecionar do Catálogo de Serviços
+                  </Button>
+                )}
               </div>
             ) : (
               <div className="space-y-3">
@@ -260,15 +366,23 @@ export function NewMeasurementPage() {
         </div>
       </PageContainer>
 
-      {/* BLOCO 4: Barra Fixa de Resumo e Fechamento (Floating Footer) */}
-      <SummaryFooter
-        servicesTotal={servicesTotal}
-        costsTotal={costsTotal}
-        grandTotal={grandTotal}
-        isSubmitting={isSubmitting}
-        onSaveDraft={handleSaveDraft}
-        onFinalize={handleFinalizeAndShare}
-      />
+      {/* BLOCO 4: Barra Fixa de Resumo e Fechamento */}
+      {!isApproved ? (
+        <SummaryFooter
+          servicesTotal={servicesTotal}
+          costsTotal={costsTotal}
+          grandTotal={grandTotal}
+          isSubmitting={isSubmitting}
+          onSaveDraft={handleSaveDraft}
+          onFinalize={handleFinalizeAndShare}
+        />
+      ) : (
+        <div className="sticky bottom-0 z-20 w-full border-t border-slate-200 bg-white/95 backdrop-blur-md px-6 py-4 shadow-lg text-center">
+          <p className="text-xs text-slate-600 font-semibold">
+            Medição aprovada — Modo somente leitura.
+          </p>
+        </div>
+      )}
 
       {/* Modal / Diálogo Seletor de Serviços do Catálogo */}
       <Dialog open={isServicePickerOpen} onOpenChange={setIsServicePickerOpen}>
@@ -336,3 +450,5 @@ export function NewMeasurementPage() {
     </div>
   )
 }
+
+export default NewMeasurementPage

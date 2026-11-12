@@ -1,8 +1,12 @@
 import { useMemo } from "react"
 import { useMeasurementsStore } from "@/stores/measurementsStore"
-import type { Measurement } from "@/types/measurement"
+import { useAuthStore } from "@/stores/authStore"
+import { useProjectsStore } from "@/stores/projectsStore"
+import type { Measurement, MeasurementStatus } from "@/types/measurement"
 
 export function useMeasurements() {
+  const user = useAuthStore((state) => state.user)
+  const { projects } = useProjectsStore()
   const {
     measurements,
     searchTerm,
@@ -22,45 +26,72 @@ export function useMeasurements() {
     setNotification,
   } = useMeasurementsStore()
 
+  // Escopo visível por papel:
+  // MEMBER e SOLO vêem suas próprias medições
+  // Gestores vêem medições não-rascunho dos projetos do seu tenant
+  const scopedMeasurements = useMemo(() => {
+    if (!user) return []
+
+    if (user.role === "MEMBER" || user.role === "SOLO") {
+      return measurements.filter(
+        (m) =>
+          m.collaboratorId === user.id ||
+          m.collaboratorName === user.name ||
+          (user.role === "SOLO" && !m.isTeamContext && !m.collaboratorId)
+      )
+    }
+
+    const tenantProjectIds = new Set(
+      projects.filter((p) => p.tenantId === user.tenantId).map((p) => p.id)
+    )
+    return measurements.filter(
+      (m) => !m.projectId || tenantProjectIds.has(m.projectId)
+    )
+  }, [measurements, projects, user])
+
   // Lista filtrada
   const filteredMeasurements = useMemo(() => {
-    return measurements.filter((item) => {
+    return scopedMeasurements.filter((item) => {
       const matchesSearch =
         searchTerm.trim() === "" ||
         item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (item.clientName &&
           item.clientName.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (item.location &&
-          item.location.toLowerCase().includes(searchTerm.toLowerCase()))
+          item.location.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (item.projectTitle &&
+          item.projectTitle.toLowerCase().includes(searchTerm.toLowerCase()))
 
       const matchesStatus =
         statusFilter === "all" || item.status === statusFilter
 
       return matchesSearch && matchesStatus
     })
-  }, [measurements, searchTerm, statusFilter])
+  }, [scopedMeasurements, searchTerm, statusFilter])
 
   // Métricas agregadas
   const metrics = useMemo(() => {
-    const totalCount = measurements.length
-    const pendingCount = measurements.filter((m) => m.status === "pending").length
-    const approvedCount = measurements.filter((m) => m.status === "approved").length
-    const reworkCount = measurements.filter((m) => m.status === "rework").length
+    const totalCount = scopedMeasurements.length
+    const draftCount = scopedMeasurements.filter((m) => m.status === "draft").length
+    const pendingCount = scopedMeasurements.filter((m) => m.status === "pending").length
+    const approvedCount = scopedMeasurements.filter((m) => m.status === "approved").length
+    const reworkCount = scopedMeasurements.filter((m) => m.status === "rework").length
 
-    const totalValue = measurements.reduce((acc, m) => acc + m.grandTotal, 0)
-    const approvedValue = measurements
+    const totalValue = scopedMeasurements.reduce((acc, m) => acc + m.grandTotal, 0)
+    const approvedValue = scopedMeasurements
       .filter((m) => m.status === "approved")
       .reduce((acc, m) => acc + m.grandTotal, 0)
 
     return {
       totalCount,
+      draftCount,
       pendingCount,
       approvedCount,
       reworkCount,
       totalValue,
       approvedValue,
     }
-  }, [measurements])
+  }, [scopedMeasurements])
 
   // Compartilhamento via Clipboard
   const copyShareLink = async (measurement: Measurement) => {
@@ -71,7 +102,6 @@ export function useMeasurements() {
       if (navigator.clipboard && window.isSecureContext) {
         await navigator.clipboard.writeText(shareUrl)
       } else {
-        // Fallback para ambientes com restrição de clipboard
         const textArea = document.createElement("textarea")
         textArea.value = shareUrl
         document.body.appendChild(textArea)
@@ -97,11 +127,11 @@ export function useMeasurements() {
 
   return {
     measurements: filteredMeasurements,
-    totalCount: measurements.length,
+    totalCount: scopedMeasurements.length,
     filteredCount: filteredMeasurements.length,
     metrics,
     searchTerm,
-    statusFilter,
+    statusFilter: statusFilter as MeasurementStatus | "all",
     selectedMeasurement,
     shareModalMeasurement,
     notification,

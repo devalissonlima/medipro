@@ -18,9 +18,9 @@ export function useHomeOverview() {
 
   // Primeiro nome do usuário para saudação
   const firstName = useMemo(() => {
-    if (!user?.nome) return "Profissional"
-    return user.nome.trim().split(" ")[0]
-  }, [user?.nome])
+    if (!user?.name) return "Profissional"
+    return user.name.trim().split(" ")[0]
+  }, [user?.name])
 
   const greeting = useMemo(() => {
     return `${getGreetingByHour()}, ${firstName}!`

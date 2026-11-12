@@ -1,14 +1,19 @@
 import { useState, useMemo } from "react"
 import { useMeasurementsStore } from "@/stores/measurementsStore"
+import { useProjectsStore } from "@/stores/projectsStore"
+import { useAuthStore } from "@/stores/authStore"
 import type { MeasurementStatus } from "@/types/measurement"
 import type { DashboardPeriod } from "@/types/dashboard"
 import { isToday, isThisWeek, isThisMonth, parseISO } from "date-fns"
 
 export function useDashboardFilters() {
+  const user = useAuthStore((state) => state.user)
+  const { projects } = useProjectsStore()
   const { measurements, updateStatus, bulkApprove, notification, setNotification } =
     useMeasurementsStore()
 
   const [period, setPeriod] = useState<DashboardPeriod>("all")
+  const [projectId, setProjectId] = useState<string | "all">("all")
   const [memberId, setMemberId] = useState<string | "all">("all")
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<MeasurementStatus | "all">("all")
@@ -19,9 +24,30 @@ export function useDashboardFilters() {
   // Modal para solicitar revisão
   const [reworkMeasurementId, setReworkMeasurementId] = useState<string | null>(null)
 
+  // Projetos pertencentes ao tenant atual (para popular o Select "Filtrar por Projeto")
+  const tenantProjects = useMemo(() => {
+    if (!user) return projects
+    return projects.filter((p) => p.tenantId === user.tenantId)
+  }, [projects, user])
+
+  // Medições do tenant (se houver projectId do tenant ou isTeamContext)
+  // Rascunhos ("draft") são privados do autor e só aparecem no dashboard após envio ("pending")
+  const tenantMeasurements = useMemo(() => {
+    const projectIds = new Set(tenantProjects.map((p) => p.id))
+    return measurements.filter(
+      (m) => m.status !== "draft" && (!m.projectId || projectIds.has(m.projectId))
+    )
+  }, [measurements, tenantProjects])
+
+  // Medições no escopo do Projeto selecionado (usado para contadores de tabs)
+  const projectScopedMeasurements = useMemo(() => {
+    if (projectId === "all") return tenantMeasurements
+    return tenantMeasurements.filter((m) => m.projectId === projectId)
+  }, [tenantMeasurements, projectId])
+
   // Filtragem combinada
   const filteredMeasurements = useMemo(() => {
-    return measurements.filter((m) => {
+    return projectScopedMeasurements.filter((m) => {
       // 1. Filtro temporal
       if (period !== "all") {
         try {
@@ -55,15 +81,22 @@ export function useDashboardFilters() {
         const matchesMember =
           m.collaboratorName?.toLowerCase().includes(query) || false
         const matchesClient = m.clientName?.toLowerCase().includes(query) || false
+        const matchesProject = m.projectTitle?.toLowerCase().includes(query) || false
 
-        if (!matchesTitle && !matchesLocation && !matchesMember && !matchesClient) {
+        if (
+          !matchesTitle &&
+          !matchesLocation &&
+          !matchesMember &&
+          !matchesClient &&
+          !matchesProject
+        ) {
           return false
         }
       }
 
       return true
     })
-  }, [measurements, period, memberId, statusFilter, searchQuery])
+  }, [projectScopedMeasurements, period, memberId, statusFilter, searchQuery])
 
   // IDs pendentes na lista filtrada
   const pendingFilteredIds = useMemo(() => {
@@ -130,6 +163,7 @@ export function useDashboardFilters() {
 
   const clearFilters = () => {
     setPeriod("all")
+    setProjectId("all")
     setMemberId("all")
     setSearchQuery("")
     setStatusFilter("all")
@@ -138,6 +172,9 @@ export function useDashboardFilters() {
   return {
     period,
     setPeriod,
+    projectId,
+    setProjectId,
+    projects: tenantProjects,
     memberId,
     setMemberId,
     searchQuery,
@@ -145,7 +182,7 @@ export function useDashboardFilters() {
     statusFilter,
     setStatusFilter,
     filteredMeasurements,
-    allMeasurements: measurements,
+    allMeasurements: projectScopedMeasurements,
     selectedIds,
     pendingFilteredIds,
     bulkSelectedTotal,

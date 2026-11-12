@@ -72,13 +72,13 @@ export function ServicesPage() {
         </div>
       )}
 
-      {/* Header com Ação Principal */}
+      {/* Header com Ação Principal liberada para todos os perfis com acesso */}
       <PageHeader
         title="Catálogo de Serviços"
-        description="Tabela base de preços para mão de obra e acabamentos. Estes serviços alimentam o lançamento de medições e orçamentos."
+        description="Tabela base de preços e serviços para mão de obra e acabamentos. Cadastre seus serviços para alimentar medições e orçamentos."
         badge={
           <Badge variant="outline" className="text-amber-800 bg-amber-50 border-amber-300">
-            Tabela de Referência
+            Tabela de Serviços
           </Badge>
         }
         actions={
@@ -86,7 +86,7 @@ export function ServicesPage() {
             onClick={openCreateModal}
             className="gap-2 bg-slate-900 text-white hover:bg-slate-800 shadow-sm text-xs font-semibold h-10 px-4"
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="h-4 w-4 text-amber-400" />
             Novo Serviço
           </Button>
         }

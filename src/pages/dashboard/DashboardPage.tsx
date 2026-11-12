@@ -22,6 +22,9 @@ export function DashboardPage() {
   const {
     period,
     setPeriod,
+    projectId,
+    setProjectId,
+    projects,
     memberId,
     setMemberId,
     searchQuery,
@@ -110,11 +113,14 @@ export function DashboardPage() {
       {/* 2. Filtros e Controle Temporal */}
       <DashboardFilters
         period={period}
+        projectId={projectId}
+        projects={projects}
         memberId={memberId}
         searchQuery={searchQuery}
         statusFilter={statusFilter}
         statusCounts={statusCounts}
         onPeriodChange={setPeriod}
+        onProjectChange={setProjectId}
         onMemberChange={setMemberId}
         onSearchChange={setSearchQuery}
         onStatusChange={setStatusFilter}

@@ -7,6 +7,7 @@ import {
   Wrench,
   AlertCircle,
   FileText,
+  ShieldCheck,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import type { Measurement } from "@/types/measurement"
@@ -16,12 +17,16 @@ interface MeasurementDetailViewProps {
   measurement: Measurement
   onApprove: (id: string) => void
   onRequestRework: (id: string) => void
+  onManage?: (measurement: Measurement) => void
+  readOnly?: boolean
 }
 
 export function MeasurementDetailView({
   measurement,
   onApprove,
   onRequestRework,
+  onManage,
+  readOnly = false,
 }: MeasurementDetailViewProps) {
   const isPending = measurement.status === "pending"
 
@@ -179,30 +184,48 @@ export function MeasurementDetailView({
           </span>
         </div>
 
-        <div className="flex items-center gap-2 justify-end">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => onRequestRework(measurement.id)}
-            className="text-xs text-orange-700 border-orange-300 hover:bg-orange-50 gap-1.5 h-9"
-          >
-            <RotateCcw className="h-3.5 w-3.5 text-orange-600" />
-            <span>Solicitar Revisão</span>
-          </Button>
+        {!readOnly && (
+          <div className="flex items-center gap-2 justify-end">
+            {onManage && (
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => onManage(measurement)}
+                className="text-xs bg-slate-900 hover:bg-slate-800 text-white font-semibold gap-1.5 h-9 shadow-xs"
+              >
+                <ShieldCheck className="h-4 w-4 text-amber-400" />
+                <span>Gerenciar Medição</span>
+              </Button>
+            )}
 
-          {isPending && (
-            <Button
-              type="button"
-              size="sm"
-              onClick={() => onApprove(measurement.id)}
-              className="text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-semibold gap-1.5 h-9 shadow-xs"
-            >
-              <CheckCircle2 className="h-3.5 w-3.5" />
-              <span>Aprovar Medição</span>
-            </Button>
-          )}
-        </div>
+            {!onManage && (
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onRequestRework(measurement.id)}
+                  className="text-xs text-orange-700 border-orange-300 hover:bg-orange-50 gap-1.5 h-9"
+                >
+                  <RotateCcw className="h-3.5 w-3.5 text-orange-600" />
+                  <span>Solicitar Revisão</span>
+                </Button>
+
+                {isPending && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => onApprove(measurement.id)}
+                    className="text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-semibold gap-1.5 h-9 shadow-xs"
+                  >
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    <span>Aprovar Medição</span>
+                  </Button>
+                )}
+              </>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )
