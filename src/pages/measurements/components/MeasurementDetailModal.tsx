@@ -3,9 +3,8 @@ import {
   MapPin,
   Building2,
   Share2,
-  CheckCircle2,
-  RotateCcw,
-  XCircle,
+  Pencil,
+  Trash2,
 } from "lucide-react"
 import {
   Dialog,
@@ -17,23 +16,27 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { MeasurementStatusBadge } from "./MeasurementStatusBadge"
-import type { Measurement, MeasurementStatus } from "@/types/measurement"
+import type { Measurement } from "@/types/measurement"
 import { formatCurrency } from "@/utils/calculations"
 
 interface MeasurementDetailModalProps {
   measurement: Measurement | null
   onClose: () => void
-  onUpdateStatus: (id: string, status: MeasurementStatus) => void
+  onEdit?: (measurement: Measurement) => void
+  onDelete?: (id: string) => void
   onOpenShare: (measurement: Measurement) => void
 }
 
 export function MeasurementDetailModal({
   measurement,
   onClose,
-  onUpdateStatus,
+  onEdit,
+  onDelete,
   onOpenShare,
 }: MeasurementDetailModalProps) {
   if (!measurement) return null
+
+  const canEdit = measurement.status !== "approved"
 
   return (
     <Dialog open={!!measurement} onOpenChange={onClose}>
@@ -170,45 +173,33 @@ export function MeasurementDetailModal({
               </span>
             </div>
           </div>
-
-          {/* Ações de Mudança de Status */}
-          <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100">
-            <span className="text-xs font-semibold text-slate-600">
-              Aprovação / Conferência:
-            </span>
-            <div className="flex items-center gap-1.5">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onUpdateStatus(measurement.id, "approved")}
-                className="h-8 text-xs text-emerald-700 border-emerald-300 hover:bg-emerald-50 gap-1"
-              >
-                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-                Aprovar
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onUpdateStatus(measurement.id, "rework")}
-                className="h-8 text-xs text-orange-700 border-orange-300 hover:bg-orange-50 gap-1"
-              >
-                <RotateCcw className="h-3.5 w-3.5 text-orange-600" />
-                Pedir Ajuste
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onUpdateStatus(measurement.id, "rejected")}
-                className="h-8 text-xs text-rose-700 border-rose-300 hover:bg-rose-50 gap-1"
-              >
-                <XCircle className="h-3.5 w-3.5 text-rose-600" />
-                Rejeitar
-              </Button>
-            </div>
-          </div>
         </div>
 
-        <DialogFooter className="gap-2 sm:gap-0 mt-2">
+        <DialogFooter className="gap-2 sm:gap-2 mt-2">
+          {canEdit && onDelete && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onDelete(measurement.id)}
+              className="text-xs gap-1.5 border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700 mr-auto"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              Excluir
+            </Button>
+          )}
+
+          {canEdit && onEdit && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onEdit(measurement)}
+              className="text-xs gap-1.5 border-amber-300 text-amber-800 hover:bg-amber-50"
+            >
+              <Pencil className="h-3.5 w-3.5 text-amber-600" />
+              Editar Medição
+            </Button>
+          )}
+
           <Button
             type="button"
             variant="outline"
@@ -218,6 +209,7 @@ export function MeasurementDetailModal({
             <Share2 className="h-3.5 w-3.5 text-slate-600" />
             Compartilhar Link
           </Button>
+
           <Button
             type="button"
             className="bg-slate-900 text-white hover:bg-slate-800 text-xs"

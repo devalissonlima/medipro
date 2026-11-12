@@ -1,18 +1,22 @@
-import { Search, X } from "lucide-react"
+import { Search, X, FolderKanban } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Select } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import type { DashboardPeriod } from "@/types/dashboard"
 import type { MeasurementStatus } from "@/types/measurement"
+import type { Project } from "@/types/project"
 import { MOCK_TEAM_COLLABORATORS } from "@/types/dashboard"
 
 interface DashboardFiltersProps {
   period: DashboardPeriod
+  projectId: string | "all"
+  projects: Project[]
   memberId: string | "all"
   searchQuery: string
   statusFilter: MeasurementStatus | "all"
   statusCounts: Record<string, number>
   onPeriodChange: (p: DashboardPeriod) => void
+  onProjectChange: (id: string | "all") => void
   onMemberChange: (id: string | "all") => void
   onSearchChange: (q: string) => void
   onStatusChange: (status: MeasurementStatus | "all") => void
@@ -21,11 +25,14 @@ interface DashboardFiltersProps {
 
 export function DashboardFilters({
   period,
+  projectId,
+  projects,
   memberId,
   searchQuery,
   statusFilter,
   statusCounts,
   onPeriodChange,
+  onProjectChange,
   onMemberChange,
   onSearchChange,
   onStatusChange,
@@ -46,10 +53,38 @@ export function DashboardFilters({
   ]
 
   const hasActiveFilters =
-    period !== "all" || memberId !== "all" || searchQuery !== "" || statusFilter !== "all"
+    period !== "all" ||
+    projectId !== "all" ||
+    memberId !== "all" ||
+    searchQuery !== "" ||
+    statusFilter !== "all"
 
   return (
     <div className="space-y-3.5 bg-white p-4 rounded-xl border border-slate-200/90 shadow-2xs">
+      {/* Linha 0: Filtro Destaque por Projeto */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+        <div className="flex items-center gap-2 text-xs font-bold text-slate-700">
+          <FolderKanban className="h-4 w-4 text-amber-600" />
+          <span>Filtrar por Projeto:</span>
+        </div>
+
+        <div className="w-full sm:max-w-sm">
+          <Select
+            value={projectId}
+            onChange={(e) => onProjectChange(e.target.value)}
+            className="h-9 text-xs bg-slate-50/70 font-medium"
+            aria-label="Filtrar por Projeto"
+          >
+            <option value="all">Todos os Projetos da Empresa</option>
+            {projects.map((proj) => (
+              <option key={proj.id} value={proj.id}>
+                {proj.title}
+              </option>
+            ))}
+          </Select>
+        </div>
+      </div>
+
       {/* Linha Superior: Busca + Filtro Temporal + Filtro de Colaborador */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
         {/* Campo de Busca Rápida (5 cols) */}
@@ -121,7 +156,7 @@ export function DashboardFilters({
                 key={opt.value}
                 type="button"
                 onClick={() => onStatusChange(opt.value)}
-                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-all ${
+                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
                   isSelected
                     ? "bg-slate-900 text-white shadow-xs font-semibold"
                     : "bg-slate-100/70 text-slate-600 hover:bg-slate-200/70"

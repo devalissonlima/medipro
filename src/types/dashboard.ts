@@ -25,27 +25,27 @@ export interface TeamCollaborator {
 
 export const MOCK_TEAM_COLLABORATORS: TeamCollaborator[] = [
   {
-    id: "colab-001",
+    id: "usr_member_001",
     name: "Lucas Ferraz",
     role: "Instalador Sênior (Mármores)",
     avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
   },
   {
-    id: "colab-002",
+    id: "usr_supervisor_001",
     name: "Marcos Oliveira",
-    role: "Marmorista / Acabador",
+    role: "Encarregado de Obra",
     avatarUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
   },
   {
-    id: "colab-003",
+    id: "usr_member_002",
     name: "Tiago Santos",
     role: "Especialista em Porcelanatos & Lastras",
     avatarUrl: "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=150&auto=format&fit=crop&q=80",
   },
   {
-    id: "colab-004",
+    id: "usr_member_004",
     name: "Rafael Silveira",
-    role: "Montador e Instalador de Ilhas",
+    role: "Marceneiro & Montador",
     avatarUrl: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80",
   },
 ]

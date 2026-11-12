@@ -8,6 +8,7 @@ import {
   Clock,
   DollarSign,
   AlertCircle,
+  FileEdit,
 } from "lucide-react"
 import { PageContainer } from "@/components/shared/PageContainer"
 import { PageHeader } from "@/components/shared/PageHeader"
@@ -37,7 +38,6 @@ export function MeasurementsPage() {
     setStatusFilter,
     deleteMeasurement,
     duplicateMeasurement,
-    updateStatus,
     openDetailModal,
     closeDetailModal,
     openShareModal,
@@ -46,12 +46,21 @@ export function MeasurementsPage() {
     dismissNotification,
   } = useMeasurements()
 
-  const statusOptions: { label: string; value: MeasurementStatus | "all"; count: number }[] = [
+  const statusOptions: {
+    label: string
+    value: MeasurementStatus | "all"
+    count: number
+  }[] = [
     { label: "Todas", value: "all", count: metrics.totalCount },
+    { label: "Rascunhos", value: "draft", count: metrics.draftCount },
     { label: "Pendentes", value: "pending", count: metrics.pendingCount },
     { label: "Aprovadas", value: "approved", count: metrics.approvedCount },
     { label: "Para Ajustar", value: "rework", count: metrics.reworkCount },
   ]
+
+  const handleEditMeasurement = (id: string) => {
+    navigate(`/medicoes/editar/${id}`)
+  }
 
   return (
     <PageContainer>
@@ -86,7 +95,7 @@ export function MeasurementsPage() {
       {/* Header com Ação Principal */}
       <PageHeader
         title="Medições & Orçamentos"
-        description="Gestão de medições de campo, conferência de metragens e aprovação ágil de serviços entre equipes e clientes."
+        description="Gestão de medições de campo, rascunhos em elaboração e envio ágil para conferência e liquidação."
         badge={
           <Badge variant="outline" className="text-amber-800 bg-amber-50 border-amber-300">
             Operação de Campo
@@ -105,17 +114,17 @@ export function MeasurementsPage() {
 
       {/* Métricas Rápidas */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Total de Medições */}
+        {/* Rascunhos em Elaboração */}
         <Card className="border-slate-200/80 shadow-2xs bg-white">
           <CardContent className="p-4 flex items-center justify-between">
             <div>
-              <p className="text-xs text-slate-500 font-medium">Total de Medições</p>
-              <h3 className="text-2xl font-bold text-slate-900 mt-0.5">
-                {metrics.totalCount}
+              <p className="text-xs text-slate-500 font-medium">Rascunhos (Salvos)</p>
+              <h3 className="text-2xl font-bold text-slate-700 mt-0.5">
+                {metrics.draftCount}
               </h3>
             </div>
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
-              <Ruler className="h-5 w-5" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
+              <FileEdit className="h-5 w-5" />
             </div>
           </CardContent>
         </Card>
@@ -189,7 +198,7 @@ export function MeasurementsPage() {
             )}
           </div>
 
-          {/* Abas de Status */}
+          {/* Abas de Status com Rascunhos */}
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
             {statusOptions.map((opt) => {
               const isSelected = statusFilter === opt.value
@@ -233,7 +242,7 @@ export function MeasurementsPage() {
           <p className="mt-1 max-w-sm text-xs text-slate-500 leading-relaxed">
             {searchTerm || statusFilter !== "all"
               ? "Tente alterar os filtros de busca ou status para visualizar os orçamentos."
-              : "Lance a primeira medição da sua equipe para calcular áreas, custos e gerar o link de aprovação."}
+              : "Lance uma medição ou salve um rascunho para continuar editando e enviar mais tarde."}
           </p>
           <div className="mt-5">
             <Button
@@ -249,6 +258,7 @@ export function MeasurementsPage() {
         <MeasurementTable
           measurements={measurements}
           onOpenDetail={openDetailModal}
+          onEdit={handleEditMeasurement}
           onOpenShare={openShareModal}
           onCopyLink={copyShareLink}
           onDuplicate={duplicateMeasurement}
@@ -260,7 +270,14 @@ export function MeasurementsPage() {
       <MeasurementDetailModal
         measurement={selectedMeasurement}
         onClose={closeDetailModal}
-        onUpdateStatus={updateStatus}
+        onEdit={(m) => {
+          closeDetailModal()
+          handleEditMeasurement(m.id)
+        }}
+        onDelete={(id) => {
+          deleteMeasurement(id)
+          closeDetailModal()
+        }}
         onOpenShare={(m) => {
           closeDetailModal()
           openShareModal(m)
@@ -275,3 +292,5 @@ export function MeasurementsPage() {
     </PageContainer>
   )
 }
+
+export default MeasurementsPage

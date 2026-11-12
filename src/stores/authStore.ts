@@ -1,15 +1,53 @@
 import { create } from "zustand"
 import { persist, createJSONStorage } from "zustand/middleware"
-import type { AuthCredentials, AuthState, User } from "@/types/auth"
+import type { AuthCredentials, AuthState, User, UserRole } from "@/types/auth"
+import { useProjectsStore } from "./projectsStore"
+import { useMeasurementsStore } from "./measurementsStore"
 
-const DEFAULT_MOCK_USER: User = {
-  id: "usr_mock_001",
-  nome: "Carlos Mendes",
-  email: "carlos.mendes@medipro.com.br",
-  avatarUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80",
-  role: "gestor",
-  plano: "Plano Pro",
+export const MOCK_USERS_BY_ROLE: Record<Exclude<UserRole, "MASTER">, User> = {
+  MANAGER: {
+    id: "usr_manager_001",
+    name: "Carlos Mendes",
+    email: "carlos.mendes@medipro.com.br",
+    avatarUrl:
+      "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80",
+    role: "MANAGER",
+    tenantId: "tenant_01",
+    plano: "Plano Pro",
+  },
+  PROJECT_SUPERVISOR: {
+    id: "usr_supervisor_001",
+    name: "Marcos Oliveira",
+    email: "marcos.oliveira@medipro.com.br",
+    avatarUrl:
+      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
+    role: "PROJECT_SUPERVISOR",
+    tenantId: "tenant_01",
+    plano: "Plano Pro",
+  },
+  MEMBER: {
+    id: "usr_member_001",
+    name: "Lucas Ferraz",
+    email: "lucas.ferraz@medipro.com.br",
+    avatarUrl:
+      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+    role: "MEMBER",
+    tenantId: "tenant_01",
+    plano: "Plano Pro",
+  },
+  SOLO: {
+    id: "usr_solo_001",
+    name: "João Autônomo",
+    email: "joao.silva@autonomo.com.br",
+    avatarUrl:
+      "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80",
+    role: "SOLO",
+    tenantId: "tenant_solo_01",
+    plano: "Plano Básico",
+  },
 }
+
+const DEFAULT_MOCK_USER = MOCK_USERS_BY_ROLE.MANAGER
 
 export const useAuthStore = create<AuthState>()(
   persist(
@@ -22,23 +60,24 @@ export const useAuthStore = create<AuthState>()(
       login: async ({ email }: AuthCredentials) => {
         set({ isLoading: true, error: null })
         try {
-          // Simula latência de autenticação da API
           await new Promise((resolve) => setTimeout(resolve, 400))
 
           const formattedEmail = email.trim() || DEFAULT_MOCK_USER.email
-          // Extrai o primeiro nome a partir do email se o usuário digitar outro
           const extractedName = formattedEmail.includes("@")
             ? formattedEmail
                 .split("@")[0]
                 .replace(/[._-]/g, " ")
                 .replace(/\b\w/g, (l) => l.toUpperCase())
-            : DEFAULT_MOCK_USER.nome
+            : DEFAULT_MOCK_USER.name
 
           const authenticatedUser: User = {
             ...DEFAULT_MOCK_USER,
-            nome: extractedName || DEFAULT_MOCK_USER.nome,
+            name: extractedName || DEFAULT_MOCK_USER.name,
             email: formattedEmail,
           }
+
+          useProjectsStore.getState().ensureSeedData()
+          useMeasurementsStore.getState().ensureSeedData()
 
           set({
             user: authenticatedUser,
@@ -56,6 +95,19 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
+      loginAsMockRole: (role) => {
+        const mockUser = MOCK_USERS_BY_ROLE[role]
+        useProjectsStore.getState().ensureSeedData()
+        useMeasurementsStore.getState().ensureSeedData()
+
+        set({
+          user: mockUser,
+          isAuthenticated: true,
+          isLoading: false,
+          error: null,
+        })
+      },
+
       logout: () => {
         set({
           user: null,
@@ -66,7 +118,7 @@ export const useAuthStore = create<AuthState>()(
       },
     }),
     {
-      name: "@medipro:auth-state",
+      name: "@medipro:auth-state-v2",
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         user: state.user,

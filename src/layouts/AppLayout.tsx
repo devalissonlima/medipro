@@ -46,7 +46,7 @@ export function AppLayout() {
       <div className="flex flex-1 flex-col overflow-hidden">
         <Header onToggleMobileMenu={toggleMobileMenu} />
         <main className="flex-1 overflow-y-auto bg-slate-50">
-          <div key={location.pathname} className="animate-in fade-in duration-200">
+          <div key={location.pathname} className="animate-in fade-in duration-200 min-h-full flex flex-col">
             <Outlet />
           </div>
         </main>

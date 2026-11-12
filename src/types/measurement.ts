@@ -1,4 +1,9 @@
-export type MeasurementStatus = "pending" | "approved" | "rejected" | "rework"
+export type MeasurementStatus =
+  | "draft"
+  | "pending"
+  | "approved"
+  | "rejected"
+  | "rework"
 
 export interface MeasurementServiceItem {
   id: string
@@ -26,6 +31,8 @@ export interface Measurement {
   location?: string
   clientId?: string
   clientName?: string
+  projectId?: string
+  projectTitle?: string
   isTeamContext: boolean
   leaderId?: string
   collaboratorId?: string
@@ -45,8 +52,17 @@ export interface Measurement {
 
 export const MEASUREMENT_STATUS_CONFIG: Record<
   MeasurementStatus,
-  { label: string; variant: "default" | "secondary" | "destructive" | "outline"; badgeClass: string }
+  {
+    label: string
+    variant: "default" | "secondary" | "destructive" | "outline"
+    badgeClass: string
+  }
 > = {
+  draft: {
+    label: "Rascunho",
+    variant: "outline",
+    badgeClass: "bg-slate-100 text-slate-700 border-slate-300",
+  },
   pending: {
     label: "Pendente",
     variant: "secondary",

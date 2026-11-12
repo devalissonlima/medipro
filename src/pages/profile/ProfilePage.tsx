@@ -28,8 +28,8 @@ export const ProfilePage: React.FC = () => {
     navigate("/login")
   }
 
-  const userInitials = user?.nome
-    ? user.nome
+  const userInitials = user?.name
+    ? user.name
         .split(" ")
         .map((n) => n[0])
         .slice(0, 2)
@@ -37,10 +37,11 @@ export const ProfilePage: React.FC = () => {
     : "MP"
 
   const roleLabels: Record<string, string> = {
-    gestor: "Líder / Empreiteiro (Gestor)",
-    prestador: "Prestador / Instalador de Campo",
-    autonomo: "Profissional Autônomo",
-    admin: "Administrador da Conta",
+    MASTER: "Administrador Master",
+    MANAGER: "Patrão / Dono (MANAGER)",
+    PROJECT_SUPERVISOR: "Encarregado de Obra (SUPERVISOR)",
+    MEMBER: "Instalador / Campo (MEMBER)",
+    SOLO: "Profissional Autônomo (SOLO)",
   }
 
   return (
@@ -81,14 +82,14 @@ export const ProfilePage: React.FC = () => {
           <CardContent className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center gap-5 p-4 rounded-xl border border-border/60 bg-muted/20">
               <Avatar className="h-20 w-20 border-2 border-primary/20 text-xl font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400">
-                <AvatarImage src={user?.avatarUrl} alt={user?.nome} />
+                <AvatarImage src={user?.avatarUrl} alt={user?.name} />
                 <AvatarFallback>{userInitials}</AvatarFallback>
               </Avatar>
 
               <div className="space-y-1.5 min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <h3 className="text-xl font-bold text-foreground truncate">
-                    {user?.nome || "Usuário Medipro"}
+                    {user?.name || "Usuário Medipro"}
                   </h3>
                   <Badge className="bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30 hover:bg-amber-500/20 text-xs">
                     {user?.plano || "Plano Pro"}
@@ -110,7 +111,7 @@ export const ProfilePage: React.FC = () => {
                 <div>
                   <span className="text-xs text-muted-foreground">Perfil de Acesso</span>
                   <p className="text-sm font-semibold text-foreground">
-                    {roleLabels[user?.role || "gestor"] || "Gestor"}
+                    {roleLabels[user?.role || "MANAGER"] || "Gestor"}
                   </p>
                 </div>
               </div>

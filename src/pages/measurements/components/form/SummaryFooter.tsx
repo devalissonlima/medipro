@@ -63,31 +63,33 @@ export function SummaryFooter({
 
         {/* Ações */}
         <div className="flex items-center gap-2.5 justify-end">
+          {/* Botão Secundário: Finalizar e Enviar */}
           <Button
             type="button"
             variant="outline"
             disabled={isSubmitting}
-            onClick={onSaveDraft}
-            className="text-xs h-10 px-4 border-slate-300 text-slate-700 hover:bg-slate-100 gap-1.5"
-          >
-            <FileText className="h-4 w-4" />
-            <span>Salvar Rascunho</span>
-          </Button>
-
-          <Button
-            type="button"
-            disabled={isSubmitting}
             onClick={onFinalize}
-            className="text-xs h-10 px-5 bg-slate-900 text-white hover:bg-slate-800 font-semibold shadow-md gap-2"
+            className="text-xs h-10 px-4 border-slate-300 text-slate-700 hover:bg-slate-100 hover:text-slate-900 font-semibold gap-2"
           >
             {isSubmitting ? (
               <span>Processando...</span>
             ) : (
               <>
-                <Send className="h-4 w-4 text-amber-400" />
-                <span>Finalizar & Gerar Link</span>
+                <Send className="h-4 w-4 text-slate-500" />
+                <span>Finalizar e Enviar</span>
               </>
             )}
+          </Button>
+
+          {/* Botão Primário: Salvar Rascunho */}
+          <Button
+            type="button"
+            disabled={isSubmitting}
+            onClick={onSaveDraft}
+            className="text-xs h-10 px-5 bg-slate-900 text-white hover:bg-slate-800 font-bold shadow-md gap-2"
+          >
+            <FileText className="h-4 w-4 text-amber-400" />
+            <span>Salvar Rascunho</span>
           </Button>
         </div>
       </div>

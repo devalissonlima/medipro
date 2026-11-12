@@ -1,17 +1,17 @@
 import * as React from "react"
 import { useNavigate, useLocation } from "react-router-dom"
 import { useAuthStore } from "@/stores/authStore"
+import type { UserRole } from "@/types/auth"
 
 export function useAuthLogic() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { login, isLoading, error, isAuthenticated } = useAuthStore()
+  const { login, loginAsMockRole, isLoading, error, isAuthenticated } = useAuthStore()
 
   const [email, setEmail] = React.useState("")
   const [senha, setSenha] = React.useState("")
   const [validationError, setValidationError] = React.useState<string | null>(null)
 
-  // Redireciona se o usuário já estiver logado
   React.useEffect(() => {
     if (isAuthenticated) {
       const from = (location.state as { from?: { pathname: string } })?.from?.pathname || "/"
@@ -35,14 +35,13 @@ export function useAuthLogic() {
 
     const success = await login({ email, senha })
     if (success) {
-      const from = (location.state as { from?: { pathname: string } })?.from?.pathname || "/"
-      navigate(from, { replace: true })
+      navigate("/", { replace: true })
     }
   }
 
-  const fillQuickDemo = () => {
-    setEmail("carlos.mendes@medipro.com.br")
-    setSenha("123456")
+  const handleMockLogin = (role: Exclude<UserRole, "MASTER">) => {
+    loginAsMockRole(role)
+    navigate("/", { replace: true })
   }
 
   return {
@@ -53,6 +52,6 @@ export function useAuthLogic() {
     isLoading,
     errorMessage: validationError || error,
     handleSubmit,
-    fillQuickDemo,
+    handleMockLogin,
   }
 }
