@@ -7,14 +7,12 @@ import {
   CheckCircle2,
   Clock,
   DollarSign,
-  AlertCircle,
   FileEdit,
 } from "lucide-react"
 import { PageContainer } from "@/components/shared/PageContainer"
 import { PageHeader } from "@/components/shared/PageHeader"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { useMeasurements } from "./hooks/useMeasurements"
 import { MeasurementTable } from "./components/MeasurementTable"
@@ -33,17 +31,16 @@ export function MeasurementsPage() {
     statusFilter,
     selectedMeasurement,
     shareModalMeasurement,
-    notification,
     setSearchTerm,
     setStatusFilter,
     deleteMeasurement,
     duplicateMeasurement,
+    finalizeMeasurement,
     openDetailModal,
     closeDetailModal,
     openShareModal,
     closeShareModal,
     copyShareLink,
-    dismissNotification,
   } = useMeasurements()
 
   const statusOptions: {
@@ -64,43 +61,10 @@ export function MeasurementsPage() {
 
   return (
     <PageContainer>
-      {/* Toast Notification Banner */}
-      {notification && (
-        <div
-          className={`flex items-center justify-between rounded-xl p-3.5 text-xs shadow-sm border transition-all animate-in slide-in-from-top-2 ${
-            notification.type === "success"
-              ? "bg-emerald-50 text-emerald-800 border-emerald-200"
-              : notification.type === "error"
-              ? "bg-rose-50 text-rose-800 border-rose-200"
-              : "bg-slate-100 text-slate-800 border-slate-200"
-          }`}
-        >
-          <div className="flex items-center gap-2">
-            {notification.type === "success" ? (
-              <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
-            ) : (
-              <AlertCircle className="h-4 w-4 text-rose-600 shrink-0" />
-            )}
-            <span className="font-medium">{notification.message}</span>
-          </div>
-          <button
-            onClick={dismissNotification}
-            className="text-xs font-semibold hover:underline px-2 py-0.5"
-          >
-            Fechar
-          </button>
-        </div>
-      )}
-
       {/* Header com Ação Principal */}
       <PageHeader
         title="Medições & Orçamentos"
         description="Gestão de medições de campo, rascunhos em elaboração e envio ágil para conferência e liquidação."
-        badge={
-          <Badge variant="outline" className="text-amber-800 bg-amber-50 border-amber-300">
-            Operação de Campo
-          </Badge>
-        }
         actions={
           <Button
             onClick={() => navigate("/medicoes/nova")}
@@ -263,6 +227,7 @@ export function MeasurementsPage() {
           onCopyLink={copyShareLink}
           onDuplicate={duplicateMeasurement}
           onDelete={deleteMeasurement}
+          onFinalize={finalizeMeasurement}
         />
       )}
 

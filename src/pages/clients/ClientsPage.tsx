@@ -1,12 +1,8 @@
 import {
-  Building2,
-  CheckCircle2,
-  AlertCircle,
   Plus,
 } from "lucide-react"
 import { PageContainer } from "@/components/shared/PageContainer"
 import { PageHeader } from "@/components/shared/PageHeader"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ClientMetrics } from "./components/ClientMetrics"
 import { ClientFilters } from "./components/ClientFilters"
@@ -29,56 +25,20 @@ export function ClientsPage() {
     typeCounts,
     viewMode,
     setViewMode,
-    notification,
     openCreateModal,
     openEditModal,
     openHistoryDrawer,
     deleteClient,
     handleCreateMeasurementForClient,
     clearFilters,
-    dismissNotification,
   } = useClients()
 
   return (
     <PageContainer className="space-y-6 pb-24">
-      {/* Toast Notification Banner */}
-      {notification && (
-        <div
-          className={`flex items-center justify-between rounded-xl p-3.5 text-xs shadow-sm border transition-all animate-in slide-in-from-top-2 ${
-            notification.type === "success"
-              ? "bg-emerald-50 text-emerald-800 border-emerald-200"
-              : notification.type === "error"
-              ? "bg-rose-50 text-rose-800 border-rose-200"
-              : "bg-slate-100 text-slate-800 border-slate-200"
-          }`}
-        >
-          <div className="flex items-center gap-2">
-            {notification.type === "success" ? (
-              <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
-            ) : (
-              <AlertCircle className="h-4 w-4 text-rose-600 shrink-0" />
-            )}
-            <span className="font-medium">{notification.message}</span>
-          </div>
-          <button
-            onClick={dismissNotification}
-            className="text-xs font-semibold hover:underline px-2 py-0.5"
-          >
-            Fechar
-          </button>
-        </div>
-      )}
-
       {/* Cabeçalho do Módulo */}
       <PageHeader
         title="Meus Clientes"
         description="Mini CRM operacional para autônomos e empreiteiras. Centralize os contatos, endereços de obras e histórico consolidado de medições."
-        badge={
-          <Badge variant="outline" className="text-purple-800 bg-purple-50 border-purple-300 gap-1.5 font-semibold text-xs">
-            <Building2 className="h-3.5 w-3.5 text-purple-600" />
-            Mini CRM & Carteira
-          </Badge>
-        }
         actions={
           <Button
             type="button"

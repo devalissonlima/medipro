@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
+import { HashRouter, Routes, Route, Navigate } from "react-router-dom"
 import { ProtectedRoute } from "@/layouts/ProtectedRoute"
 import { AppLayout } from "@/layouts/AppLayout"
 import { LoginPage } from "@/pages/auth/LoginPage"
@@ -6,16 +6,21 @@ import { HomePage } from "@/pages/home/HomePage"
 import { ServicesPage } from "@/pages/services/ServicesPage"
 import { MeasurementsPage } from "@/pages/measurements/MeasurementsPage"
 import { NewMeasurementPage } from "@/pages/measurements/NewMeasurementPage"
+import { MeasurementDetailPage } from "@/pages/measurements/MeasurementDetailPage"
 import { DashboardPage } from "@/pages/dashboard/DashboardPage"
 import { ProjectsPage } from "@/pages/projects/ProjectsPage"
+import { NewProjectPage } from "@/pages/projects/NewProjectPage"
 import { ProjectDetailPage } from "@/pages/projects/ProjectDetailPage"
 import { ClientsPage } from "@/pages/clients/ClientsPage"
 import { PlanPage } from "@/pages/plan/PlanPage"
 import { ProfilePage } from "@/pages/profile/ProfilePage"
+import { Toaster } from "@/components/ui/toaster"
+import { NavigationHistoryTracker } from "@/components/shared/NavigationHistoryTracker"
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <HashRouter>
+      <NavigationHistoryTracker />
       <Routes>
         {/* Rota Pública de Autenticação */}
         <Route path="/login" element={<LoginPage />} />
@@ -39,7 +44,7 @@ export default function App() {
               <Route path="/medicoes" element={<MeasurementsPage />} />
             </Route>
 
-            {/* Nova & Editar Medição: MEMBER, PROJECT_SUPERVISOR, SOLO e MASTER */}
+            {/* Nova & Editar Medição */}
             <Route
               element={
                 <ProtectedRoute
@@ -51,7 +56,10 @@ export default function App() {
               <Route path="/medicoes/editar/:id" element={<NewMeasurementPage />} />
             </Route>
 
-            {/* Projetos: MANAGER, PROJECT_SUPERVISOR, MEMBER, SOLO e MASTER */}
+            {/* Visualização de Detalhes da Medição (Deep-linking disponível para todos os perfis autenticados) */}
+            <Route path="/medicoes/:id" element={<MeasurementDetailPage />} />
+
+            {/* Projetos: Listagem, Novo Projeto, e Sub-rotas Deep Linked */}
             <Route
               element={
                 <ProtectedRoute
@@ -60,7 +68,10 @@ export default function App() {
               }
             >
               <Route path="/projetos" element={<ProjectsPage />} />
-              <Route path="/projetos/:id" element={<ProjectDetailPage />} />
+              <Route path="/projetos/novo" element={<NewProjectPage />} />
+              <Route path="/projetos/:id" element={<Navigate to="visao-geral" replace />} />
+              <Route path="/projetos/:id/visao-geral" element={<ProjectDetailPage />} />
+              <Route path="/projetos/:id/equipe" element={<ProjectDetailPage />} />
             </Route>
 
             {/* Clientes: MANAGER, PROJECT_SUPERVISOR, SOLO e MASTER */}
@@ -81,10 +92,11 @@ export default function App() {
           </Route>
         </Route>
 
-        {/* Fallback de rotas desconhecidas ou antigas (ex: /equipe removida) */}
+        {/* Fallback de rotas desconhecidas ou legadas */}
         <Route path="/equipe" element={<Navigate to="/projetos" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </BrowserRouter>
+      <Toaster />
+    </HashRouter>
   )
 }

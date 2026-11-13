@@ -13,7 +13,7 @@ export const DailyPulseCards: React.FC<DailyPulseCardsProps> = ({ summary }) => 
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-          Pulso Operacional (Últimas 24h)
+          Resumo das Últimas 24h
         </h2>
         <span className="flex items-center gap-1 text-xs text-muted-foreground">
           <TrendingUp className="h-3 w-3 text-emerald-500" />

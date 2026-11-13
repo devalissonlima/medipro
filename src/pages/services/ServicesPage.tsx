@@ -1,8 +1,7 @@
-import { Plus, CheckCircle2, AlertCircle, Layers, DollarSign, Tag } from "lucide-react"
+import { Plus, Layers, DollarSign } from "lucide-react"
 import { PageContainer } from "@/components/shared/PageContainer"
 import { PageHeader } from "@/components/shared/PageHeader"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { useServices } from "./hooks/useServices"
 import { ServiceCard } from "./components/ServiceCard"
@@ -20,14 +19,12 @@ export function ServicesPage() {
     searchTerm,
     selectedCategory,
     viewMode,
-    notification,
     setSearchTerm,
     setSelectedCategory,
     setViewMode,
     openCreateModal,
     openEditModal,
     deleteService,
-    dismissNotification,
     clearFilters,
   } = useServices()
 
@@ -44,43 +41,10 @@ export function ServicesPage() {
 
   return (
     <PageContainer>
-      {/* Toast Notification Banner */}
-      {notification && (
-        <div
-          className={`flex items-center justify-between rounded-xl p-3.5 text-xs shadow-sm border transition-all animate-in slide-in-from-top-2 ${
-            notification.type === "success"
-              ? "bg-emerald-50 text-emerald-800 border-emerald-200"
-              : notification.type === "error"
-              ? "bg-rose-50 text-rose-800 border-rose-200"
-              : "bg-slate-100 text-slate-800 border-slate-200"
-          }`}
-        >
-          <div className="flex items-center gap-2">
-            {notification.type === "success" ? (
-              <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
-            ) : (
-              <AlertCircle className="h-4 w-4 text-rose-600 shrink-0" />
-            )}
-            <span className="font-medium">{notification.message}</span>
-          </div>
-          <button
-            onClick={dismissNotification}
-            className="text-xs font-semibold hover:underline px-2 py-0.5"
-          >
-            Fechar
-          </button>
-        </div>
-      )}
-
       {/* Header com Ação Principal liberada para todos os perfis com acesso */}
       <PageHeader
         title="Catálogo de Serviços"
         description="Tabela base de preços e serviços para mão de obra e acabamentos. Cadastre seus serviços para alimentar medições e orçamentos."
-        badge={
-          <Badge variant="outline" className="text-amber-800 bg-amber-50 border-amber-300">
-            Tabela de Serviços
-          </Badge>
-        }
         actions={
           <Button
             onClick={openCreateModal}
@@ -93,7 +57,7 @@ export function ServicesPage() {
       />
 
       {/* Métricas Rápidas do Catálogo */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Card className="border-slate-200/80 shadow-2xs bg-white">
           <CardContent className="p-4 flex items-center justify-between">
             <div>
@@ -118,20 +82,6 @@ export function ServicesPage() {
             </div>
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200">
               <DollarSign className="h-5 w-5" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-slate-200/80 shadow-2xs bg-white">
-          <CardContent className="p-4 flex items-center justify-between">
-            <div>
-              <p className="text-xs text-slate-500 font-medium">Categorias em Uso</p>
-              <h3 className="text-2xl font-bold text-slate-900 mt-0.5">
-                {Object.keys(categoryCounts).length - 1}
-              </h3>
-            </div>
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-700 border border-blue-200">
-              <Tag className="h-5 w-5" />
             </div>
           </CardContent>
         </Card>

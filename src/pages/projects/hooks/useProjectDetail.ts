@@ -123,8 +123,8 @@ export function useProjectDetail(projectId: string) {
     return projectMembers.filter((m) => m.status === "active").length
   }, [projectMembers])
 
-  // Regras RBAC
-  const canViewTeamTab = user?.role !== "SOLO"
+  // Regras RBAC (Aba Equipe oculta para SOLO e MEMBER)
+  const canViewTeamTab = user?.role !== "SOLO" && user?.role !== "MEMBER"
   const canApproveMeasurements =
     user?.role === "MANAGER" ||
     user?.role === "PROJECT_SUPERVISOR" ||
@@ -146,6 +146,16 @@ export function useProjectDetail(projectId: string) {
   const reworkMeasurement = (measurementId: string, note: string) => {
     if (!canApproveMeasurements) return
     updateStatus(measurementId, "rework", note)
+  }
+
+  const finalizeMeasurement = (measurementId: string) => {
+    const target = measurements.find((m) => m.id === measurementId)
+    if (!target) return
+    updateStatus(measurementId, "pending")
+    setNotification({
+      message: `Medição "${target.title}" finalizada e disponibilizada na obra com sucesso!`,
+      type: "success",
+    })
   }
 
   const deleteMeasurement = (measurementId: string) => {
@@ -204,6 +214,7 @@ export function useProjectDetail(projectId: string) {
     approveMeasurement,
     rejectMeasurement,
     reworkMeasurement,
+    finalizeMeasurement,
     deleteMeasurement,
     openReworkModal,
     closeReworkModal,

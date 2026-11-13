@@ -108,6 +108,12 @@ export const useAuthStore = create<AuthState>()(
         })
       },
 
+      updateProfile: (data) => {
+        set((state) => ({
+          user: state.user ? { ...state.user, ...data } : null,
+        }))
+      },
+
       logout: () => {
         set({
           user: null,

@@ -5,6 +5,7 @@ import {
   Mail,
   Plus,
   Calendar,
+  ExternalLink,
 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import {
@@ -18,6 +19,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { MeasurementStatusBadge } from "@/pages/measurements/components/MeasurementStatusBadge"
+import { useAuthStore } from "@/stores/authStore"
 import { useClientsStore } from "@/stores/clientsStore"
 import { useMeasurementsStore } from "@/stores/measurementsStore"
 import { CLIENT_TYPE_CONFIG } from "@/types/client"
@@ -25,6 +27,8 @@ import { formatCurrency } from "@/utils/calculations"
 
 export function ClientHistoryDrawer() {
   const navigate = useNavigate()
+  const user = useAuthStore((state) => state.user)
+  const isSolo = user?.role === "SOLO"
   const { historyClient, closeModals } = useClientsStore()
   const { measurements } = useMeasurementsStore()
 
@@ -140,41 +144,59 @@ export function ClientHistoryDrawer() {
                 Histórico de Medições & Orçamentos
               </h4>
 
-              <Button
-                type="button"
-                size="sm"
-                onClick={handleCreateNew}
-                className="h-7 text-xs bg-slate-900 text-white hover:bg-slate-800 gap-1 px-2.5 shadow-2xs"
-              >
-                <Plus className="h-3.5 w-3.5" />
-                <span>Nova Medição</span>
-              </Button>
+              {/* Botão de Criação Restrito a SOLO */}
+              {isSolo && (
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={handleCreateNew}
+                  className="h-7 text-xs bg-slate-900 text-white hover:bg-slate-800 gap-1 px-2.5 shadow-2xs"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  <span>Nova Medição</span>
+                </Button>
+              )}
             </div>
 
             {clientMeasurements.length === 0 ? (
               <div className="rounded-xl border border-dashed border-slate-200 p-6 text-center text-xs text-slate-500 bg-slate-50">
                 <p>Nenhuma medição registrada para este cliente ainda.</p>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleCreateNew}
-                  className="mt-3 text-xs gap-1.5"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  Criar Primeiro Orçamento
-                </Button>
+                {isSolo && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCreateNew}
+                    className="mt-3 text-xs gap-1.5"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    Criar Primeiro Orçamento
+                  </Button>
+                )}
               </div>
             ) : (
               <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
                 {clientMeasurements.map((m) => (
                   <div
                     key={m.id}
-                    className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-3 shadow-2xs hover:border-slate-300 transition-colors"
+                    onClick={() => {
+                      closeModals()
+                      navigate(`/medicoes/${m.id}`)
+                    }}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        closeModals()
+                        navigate(`/medicoes/${m.id}`)
+                      }
+                    }}
+                    className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-3 shadow-2xs hover:border-amber-400 hover:bg-amber-50/20 transition-all cursor-pointer group"
+                    title="Clique para abrir detalhes da medição"
                   >
                     <div className="space-y-0.5">
                       <div className="flex items-center gap-2">
-                        <span className="font-bold text-slate-900 text-xs">
+                        <span className="font-bold text-slate-900 group-hover:text-amber-800 group-hover:underline text-xs transition-colors">
                           {m.title}
                         </span>
                         <MeasurementStatusBadge status={m.status} />
@@ -189,10 +211,11 @@ export function ClientHistoryDrawer() {
                       </div>
                     </div>
 
-                    <div className="text-right">
+                    <div className="text-right flex items-center gap-2">
                       <span className="font-mono font-bold text-slate-900 text-xs block">
                         {formatCurrency(m.grandTotal)}
                       </span>
+                      <ExternalLink className="h-3.5 w-3.5 text-slate-400 group-hover:text-amber-600 transition-colors shrink-0" />
                     </div>
                   </div>
                 ))}

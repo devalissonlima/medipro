@@ -1,12 +1,11 @@
 import React from "react"
-import { useParams, useNavigate } from "react-router-dom"
+import { useParams, useNavigate, useLocation } from "react-router-dom"
+import { useSmartBack } from "@/hooks/useSmartBack"
 import {
   ArrowLeft,
   Building2,
   BarChart3,
   Users,
-  CheckCircle2,
-  AlertCircle,
   Plus,
   MapPin,
   Calendar,
@@ -17,6 +16,7 @@ import { Badge } from "@/components/ui/badge"
 import { Select } from "@/components/ui/select"
 import { RequestReworkModal } from "@/pages/dashboard/components/RequestReworkModal"
 import { PROJECT_STATUS_CONFIG, type ProjectStatus } from "@/types/project"
+import { useAuthStore } from "@/stores/authStore"
 import { useProjectDetail } from "./hooks/useProjectDetail"
 import { ProjectMeasurementsTab } from "./components/ProjectMeasurementsTab"
 import { ProjectTeamTab } from "./components/ProjectTeamTab"
@@ -25,12 +25,13 @@ import { AddProjectMemberModal } from "./components/AddProjectMemberModal"
 export const ProjectDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const goBack = useSmartBack("/projetos")
+  const location = useLocation()
+  const user = useAuthStore((state) => state.user)
 
   const {
     project,
     resolvedClientName,
-    activeTab,
-    setActiveTab,
     projectMeasurements,
     metrics,
     projectMembers,
@@ -41,11 +42,10 @@ export const ProjectDetailPage: React.FC = () => {
     isMember,
     reworkMeasurementId,
     isAddMemberModalOpen,
-    notification,
-    dismissNotification,
     approveMeasurement,
     rejectMeasurement,
     reworkMeasurement,
+    finalizeMeasurement,
     deleteMeasurement,
     closeReworkModal,
     confirmRework,
@@ -57,6 +57,18 @@ export const ProjectDetailPage: React.FC = () => {
     updateProjectStatus,
   } = useProjectDetail(id || "")
 
+  const isTeamRoute = location.pathname.endsWith("/equipe")
+  const currentTab = isTeamRoute ? "team" : "overview"
+
+  // Restringir criação de medição na obra exclusivamente a SOLO e MEMBER
+  const canCreateMeasurement = user?.role === "SOLO" || user?.role === "MEMBER"
+
+  React.useEffect(() => {
+    if (isTeamRoute && !canViewTeamTab && project) {
+      navigate(`/projetos/${project.id}/visao-geral`, { replace: true })
+    }
+  }, [isTeamRoute, canViewTeamTab, project, navigate])
+
   if (!project) {
     return (
       <PageContainer className="py-16 text-center space-y-4">
@@ -66,7 +78,7 @@ export const ProjectDetailPage: React.FC = () => {
         <p className="text-sm text-slate-500">
           O projeto solicitado não existe ou você não possui permissão para acessá-lo.
         </p>
-        <Button onClick={() => navigate("/projetos")} variant="outline">
+        <Button onClick={() => goBack("/projetos")} variant="outline">
           Voltar para Projetos
         </Button>
       </PageContainer>
@@ -77,34 +89,6 @@ export const ProjectDetailPage: React.FC = () => {
 
   return (
     <PageContainer className="space-y-6 pb-20">
-      {/* Toast Notification */}
-      {notification && (
-        <div
-          className={`flex items-center justify-between rounded-xl p-3.5 text-xs shadow-sm border ${
-            notification.type === "success"
-              ? "bg-emerald-50 text-emerald-800 border-emerald-200"
-              : notification.type === "error"
-              ? "bg-rose-50 text-rose-800 border-rose-200"
-              : "bg-slate-100 text-slate-800 border-slate-200"
-          }`}
-        >
-          <div className="flex items-center gap-2">
-            {notification.type === "success" ? (
-              <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
-            ) : (
-              <AlertCircle className="h-4 w-4 text-amber-600 shrink-0" />
-            )}
-            <span className="font-medium">{notification.message}</span>
-          </div>
-          <button
-            onClick={dismissNotification}
-            className="text-xs font-semibold hover:underline px-2 py-0.5"
-          >
-            Fechar
-          </button>
-        </div>
-      )}
-
       {/* Cabeçalho do Projeto */}
       <div className="rounded-xl border border-slate-200/90 bg-white p-5 shadow-2xs space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
@@ -112,9 +96,9 @@ export const ProjectDetailPage: React.FC = () => {
             <Button
               variant="outline"
               size="icon"
-              onClick={() => navigate("/projetos")}
+              onClick={() => goBack("/projetos")}
               className="h-9 w-9 shrink-0 border-slate-300 text-slate-600 hover:text-slate-900 mt-0.5"
-              title="Voltar para Projetos"
+              title="Voltar para a página anterior"
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
@@ -180,24 +164,26 @@ export const ProjectDetailPage: React.FC = () => {
               </Select>
             )}
 
-            <Button
-              size="sm"
-              onClick={() => navigate(`/medicoes/nova?projectId=${project.id}`)}
-              className="h-9 gap-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold"
-            >
-              <Plus className="h-3.5 w-3.5 text-amber-400" />
-              Nova Medição na Obra
-            </Button>
+            {canCreateMeasurement && (
+              <Button
+                size="sm"
+                onClick={() => navigate(`/medicoes/nova?projectId=${project.id}`)}
+                className="h-9 gap-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold"
+              >
+                <Plus className="h-3.5 w-3.5 text-amber-400" />
+                Nova Medição na Obra
+              </Button>
+            )}
           </div>
         </div>
 
-        {/* Submenu (Tabs) */}
+        {/* Submenu (Tabs com Deep-link) */}
         <div className="flex items-center gap-2 border-t border-slate-100 pt-3">
           <button
             type="button"
-            onClick={() => setActiveTab("overview")}
+            onClick={() => navigate(`/projetos/${project.id}/visao-geral`)}
             className={`flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs font-semibold transition-colors ${
-              activeTab === "overview"
+              currentTab === "overview"
                 ? "bg-amber-500/15 text-amber-800 border border-amber-500/30"
                 : "text-slate-600 hover:bg-slate-100 border border-transparent"
             }`}
@@ -214,9 +200,9 @@ export const ProjectDetailPage: React.FC = () => {
           {canViewTeamTab && (
             <button
               type="button"
-              onClick={() => setActiveTab("team")}
+              onClick={() => navigate(`/projetos/${project.id}/equipe`)}
               className={`flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs font-semibold transition-colors ${
-                activeTab === "team"
+                currentTab === "team"
                   ? "bg-amber-500/15 text-amber-800 border border-amber-500/30"
                   : "text-slate-600 hover:bg-slate-100 border border-transparent"
               }`}
@@ -232,7 +218,7 @@ export const ProjectDetailPage: React.FC = () => {
       </div>
 
       {/* Conteúdo das Tabs */}
-      {activeTab === "overview" && (
+      {currentTab === "overview" && (
         <ProjectMeasurementsTab
           measurements={projectMeasurements}
           metrics={metrics}
@@ -242,10 +228,11 @@ export const ProjectDetailPage: React.FC = () => {
           onRequestRework={reworkMeasurement}
           onReject={rejectMeasurement}
           onDelete={deleteMeasurement}
+          onFinalize={finalizeMeasurement}
         />
       )}
 
-      {activeTab === "team" && canViewTeamTab && (
+      {currentTab === "team" && canViewTeamTab && (
         <ProjectTeamTab
           members={projectMembers}
           activeCount={activeMembersCount}

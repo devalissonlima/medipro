@@ -123,6 +123,16 @@ export function useMeasurements() {
     }
   }
 
+  const finalizeMeasurement = (id: string) => {
+    const item = measurements.find((m) => m.id === id)
+    if (!item) return
+    updateStatus(id, "pending")
+    setNotification({
+      message: `Medição "${item.title}" finalizada e enviada para conferência com sucesso!`,
+      type: "success",
+    })
+  }
+
   const dismissNotification = () => setNotification(null)
 
   return {
@@ -139,6 +149,7 @@ export function useMeasurements() {
     setStatusFilter,
     deleteMeasurement,
     duplicateMeasurement,
+    finalizeMeasurement,
     updateStatus,
     openDetailModal,
     closeDetailModal,

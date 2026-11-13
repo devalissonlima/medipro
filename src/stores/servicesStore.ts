@@ -5,6 +5,7 @@ import type {
   ServiceCategory,
   ServiceViewMode,
 } from "@/types/service"
+import { toast } from "@/components/ui/use-toast"
 
 const INITIAL_SERVICES: ServiceItem[] = [
   {
@@ -136,7 +137,16 @@ export const useServicesStore = create<ServicesState>()(
       closeFormModal: () =>
         set({ isFormOpen: false, editingService: null }),
 
-      setNotification: (notification) => set({ notification }),
+      setNotification: (notification) => {
+        set({ notification })
+        if (notification) {
+          toast({
+            title: notification.type === "success" ? "Sucesso" : "Notificação",
+            description: notification.message,
+            variant: notification.type === "success" ? "success" : "default",
+          })
+        }
+      },
 
       addService: (data) =>
         set((state) => {
@@ -147,12 +157,18 @@ export const useServicesStore = create<ServicesState>()(
             createdAt: now,
             updatedAt: now,
           }
+          const msg = `Serviço "${newService.name}" cadastrado com sucesso!`
+          toast({
+            title: "Serviço Cadastrado",
+            description: msg,
+            variant: "success",
+          })
           return {
             services: [newService, ...state.services],
             isFormOpen: false,
             editingService: null,
             notification: {
-              message: `Serviço "${newService.name}" cadastrado com sucesso!`,
+              message: msg,
               type: "success",
             },
           }
@@ -164,12 +180,18 @@ export const useServicesStore = create<ServicesState>()(
           const updatedServices = state.services.map((item) =>
             item.id === id ? { ...item, ...data, updatedAt: now } : item
           )
+          const msg = "Serviço atualizado com sucesso!"
+          toast({
+            title: "Serviço Atualizado",
+            description: msg,
+            variant: "success",
+          })
           return {
             services: updatedServices,
             isFormOpen: false,
             editingService: null,
             notification: {
-              message: "Serviço atualizado com sucesso!",
+              message: msg,
               type: "success",
             },
           }
@@ -178,12 +200,18 @@ export const useServicesStore = create<ServicesState>()(
       deleteService: (id) =>
         set((state) => {
           const serviceToDelete = state.services.find((s) => s.id === id)
+          const msg = serviceToDelete
+            ? `Serviço "${serviceToDelete.name}" removido.`
+            : "Serviço removido com sucesso."
+          toast({
+            title: "Serviço Removido",
+            description: msg,
+            variant: "destructive",
+          })
           return {
             services: state.services.filter((item) => item.id !== id),
             notification: {
-              message: serviceToDelete
-                ? `Serviço "${serviceToDelete.name}" removido.`
-                : "Serviço removido com sucesso.",
+              message: msg,
               type: "info",
             },
           }

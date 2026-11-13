@@ -1,4 +1,4 @@
-import { Search, X, UserPlus, LayoutGrid, List } from "lucide-react"
+import { Search, X, LayoutGrid, List } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import type { ClientType } from "@/types/client"
@@ -11,7 +11,7 @@ interface ClientFiltersProps {
   onSearchChange: (q: string) => void
   onTypeChange: (t: ClientType | "all") => void
   onViewModeChange: (mode: "grid" | "table") => void
-  onOpenCreate: () => void
+  onOpenCreate?: () => void
   onClearFilters: () => void
 }
 
@@ -23,7 +23,6 @@ export function ClientFilters({
   onSearchChange,
   onTypeChange,
   onViewModeChange,
-  onOpenCreate,
   onClearFilters,
 }: ClientFiltersProps) {
   const typeOptions: { label: string; value: ClientType | "all" }[] = [
@@ -37,35 +36,24 @@ export function ClientFilters({
 
   return (
     <div className="space-y-3.5 bg-white p-4 rounded-xl border border-slate-200/90 shadow-2xs">
-      {/* Linha Superior: Busca + Botão Novo Cliente */}
-      <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400 pointer-events-none" />
-          <Input
-            placeholder="Buscar por cliente, empresa, WhatsApp ou endereço..."
-            value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="pl-9 pr-8 h-9 text-xs bg-slate-50/50 focus:bg-white"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => onSearchChange("")}
-              className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600"
-              aria-label="Limpar busca"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          )}
-        </div>
-
-        <Button
-          type="button"
-          onClick={onOpenCreate}
-          className="gap-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold h-9 px-4 shadow-sm"
-        >
-          <UserPlus className="h-4 w-4 text-amber-400" />
-          <span>Novo Cliente</span>
-        </Button>
+      {/* Linha Superior: Busca Textual com Input Expandido */}
+      <div className="relative flex-1 max-w-lg">
+        <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400 pointer-events-none" />
+        <Input
+          placeholder="Buscar por cliente, empresa, WhatsApp ou endereço..."
+          value={searchQuery}
+          onChange={(e) => onSearchChange(e.target.value)}
+          className="pl-9 pr-8 h-9 text-xs bg-slate-50/50 focus:bg-white"
+        />
+        {searchQuery && (
+          <button
+            onClick={() => onSearchChange("")}
+            className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600"
+            aria-label="Limpar busca"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
       </div>
 
       {/* Linha Inferior: Abas de Tipo com Contadores + Toggle Grid/Tabela */}
