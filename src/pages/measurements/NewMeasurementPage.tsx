@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { useSmartBack } from "@/hooks/useSmartBack"
 import {
   ArrowLeft,
   Calendar,
@@ -33,7 +33,7 @@ import type { ServiceItem } from "@/types/service"
 import { formatCurrency } from "@/utils/calculations"
 
 export function NewMeasurementPage() {
-  const navigate = useNavigate()
+  const goBack = useSmartBack("/medicoes")
   const { services: catalogServices } = useServicesStore()
 
   const {
@@ -93,9 +93,9 @@ export function NewMeasurementPage() {
             <Button
               variant="outline"
               size="icon"
-              onClick={() => navigate("/medicoes")}
+              onClick={() => goBack("/medicoes")}
               className="h-9 w-9 text-slate-600 hover:text-slate-900 border-slate-300"
-              title="Voltar para medições"
+              title="Voltar para a página anterior"
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
@@ -104,15 +104,11 @@ export function NewMeasurementPage() {
                 <h1 className="text-2xl font-bold tracking-tight text-slate-900">
                   {isEditing ? "Editar Medição" : "Nova Medição & Orçamento"}
                 </h1>
-                <Badge
-                  className={`text-[10px] font-bold ${
-                    isEditing
-                      ? "bg-blue-600 text-white"
-                      : "bg-amber-500 text-slate-950 hover:bg-amber-400"
-                  }`}
-                >
-                  {isEditing ? "Modo de Edição" : "Cálculo Instantâneo"}
-                </Badge>
+                {isEditing && (
+                  <Badge className="text-[10px] font-bold bg-blue-600 text-white">
+                    Modo de Edição
+                  </Badge>
+                )}
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
                 {isEditing

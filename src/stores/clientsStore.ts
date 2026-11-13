@@ -1,6 +1,7 @@
 import { create } from "zustand"
 import { persist, createJSONStorage } from "zustand/middleware"
 import type { Client } from "@/types/client"
+import { toast } from "@/components/ui/use-toast"
 
 const INITIAL_CLIENTS: Client[] = [
   {
@@ -208,11 +209,18 @@ export const useClientsStore = create<ClientsState>()(
           updatedAt: now,
         }
 
+        const msg = `Cliente "${newClient.name}" cadastrado com sucesso!`
+        toast({
+          title: "Cliente Cadastrado",
+          description: msg,
+          variant: "success",
+        })
+
         set((state) => ({
           clients: [newClient, ...state.clients],
           isFormOpen: false,
           notification: {
-            message: `Cliente "${newClient.name}" cadastrado com sucesso!`,
+            message: msg,
             type: "success",
           },
         }))
@@ -222,6 +230,12 @@ export const useClientsStore = create<ClientsState>()(
 
       updateClient: (id, data) => {
         const now = new Date().toISOString()
+        const msg = "Cadastro do cliente atualizado com sucesso!"
+        toast({
+          title: "Cliente Atualizado",
+          description: msg,
+          variant: "success",
+        })
         set((state) => ({
           clients: state.clients.map((c) =>
             c.id === id ? { ...c, ...data, updatedAt: now } : c
@@ -229,7 +243,7 @@ export const useClientsStore = create<ClientsState>()(
           isFormOpen: false,
           editingClient: null,
           notification: {
-            message: "Cadastro do cliente atualizado com sucesso!",
+            message: msg,
             type: "success",
           },
         }))
@@ -237,13 +251,19 @@ export const useClientsStore = create<ClientsState>()(
 
       deleteClient: (id) => {
         const client = get().clients.find((c) => c.id === id)
+        const msg = client
+          ? `Cliente "${client.name}" removido da carteira.`
+          : "Cliente removido com sucesso."
+        toast({
+          title: "Cliente Removido",
+          description: msg,
+          variant: "destructive",
+        })
         set((state) => ({
           clients: state.clients.filter((c) => c.id !== id),
           historyClient: state.historyClient?.id === id ? null : state.historyClient,
           notification: {
-            message: client
-              ? `Cliente "${client.name}" removido da carteira.`
-              : "Cliente removido com sucesso.",
+            message: msg,
             type: "info",
           },
         }))
@@ -255,7 +275,16 @@ export const useClientsStore = create<ClientsState>()(
       closeModals: () =>
         set({ isFormOpen: false, editingClient: null, historyClient: null }),
 
-      setNotification: (notification) => set({ notification }),
+      setNotification: (notification) => {
+        set({ notification })
+        if (notification) {
+          toast({
+            title: notification.type === "success" ? "Sucesso" : "Notificação",
+            description: notification.message,
+            variant: notification.type === "success" ? "success" : "default",
+          })
+        }
+      },
     }),
     {
       name: "@medipro:clients-data",

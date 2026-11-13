@@ -12,6 +12,7 @@ import {
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { useAuthStore } from "@/stores/authStore"
 import type { Client } from "@/types/client"
 import { CLIENT_TYPE_CONFIG } from "@/types/client"
 import { formatCurrency } from "@/utils/calculations"
@@ -32,6 +33,8 @@ export function ClientCard({
   onDelete,
 }: ClientCardProps) {
   const [showConfirmDelete, setShowConfirmDelete] = useState(false)
+  const user = useAuthStore((state) => state.user)
+  const isSolo = user?.role === "SOLO"
 
   const typeConfig = CLIENT_TYPE_CONFIG[client.type] || CLIENT_TYPE_CONFIG.residential
   const cleanPhone = client.phone.replace(/\D/g, "")
@@ -157,16 +160,18 @@ export function ClientCard({
         ) : (
           <div className="flex items-center justify-between w-full">
             <div className="flex items-center gap-1">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onCreateMeasurement(client)}
-                className="h-8 text-xs font-semibold border-amber-300 text-amber-900 bg-amber-50/60 hover:bg-amber-100 gap-1 px-2.5 shadow-2xs"
-                title="Lançar nova medição para este cliente"
-              >
-                <Plus className="h-3.5 w-3.5 text-amber-600" />
-                <span>Nova Medição</span>
-              </Button>
+              {isSolo && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onCreateMeasurement(client)}
+                  className="h-8 text-xs font-semibold border-amber-300 text-amber-900 bg-amber-50/60 hover:bg-amber-100 gap-1 px-2.5 shadow-2xs"
+                  title="Lançar nova medição para este cliente"
+                >
+                  <Plus className="h-3.5 w-3.5 text-amber-600" />
+                  <span>Nova Medição</span>
+                </Button>
+              )}
 
               <Button
                 variant="ghost"

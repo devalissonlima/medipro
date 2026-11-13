@@ -19,6 +19,7 @@ interface MeasurementDetailViewProps {
   onRequestRework: (id: string) => void
   onManage?: (measurement: Measurement) => void
   readOnly?: boolean
+  headerActions?: React.ReactNode
 }
 
 export function MeasurementDetailView({
@@ -27,6 +28,7 @@ export function MeasurementDetailView({
   onRequestRework,
   onManage,
   readOnly = false,
+  headerActions,
 }: MeasurementDetailViewProps) {
   const isPending = measurement.status === "pending"
 
@@ -40,6 +42,13 @@ export function MeasurementDetailView({
             <span className="font-bold block">Observação de Revisão Enviada:</span>
             <p className="mt-0.5 text-orange-800">{measurement.reworkNote}</p>
           </div>
+        </div>
+      )}
+
+      {/* Ações da Medição (Alinhadas à Direita antes da Sessão de Serviços) */}
+      {headerActions && (
+        <div className="flex items-center justify-end">
+          {headerActions}
         </div>
       )}
 

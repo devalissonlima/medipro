@@ -1,4 +1,4 @@
-import { FileText, Send } from "lucide-react"
+import { FileText, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { formatCurrency } from "@/utils/calculations"
 
@@ -75,7 +75,7 @@ export function SummaryFooter({
               <span>Processando...</span>
             ) : (
               <>
-                <Send className="h-4 w-4 text-slate-500" />
+                <Check className="h-4 w-4 text-emerald-600" />
                 <span>Finalizar e Enviar</span>
               </>
             )}

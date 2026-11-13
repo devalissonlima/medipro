@@ -1,11 +1,11 @@
 import * as React from "react"
-import { useNavigate, useLocation } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 import { useAuthStore } from "@/stores/authStore"
+import { useNavigationHistoryStore } from "@/stores/navigationHistoryStore"
 import type { UserRole } from "@/types/auth"
 
 export function useAuthLogic() {
   const navigate = useNavigate()
-  const location = useLocation()
   const { login, loginAsMockRole, isLoading, error, isAuthenticated } = useAuthStore()
 
   const [email, setEmail] = React.useState("")
@@ -14,10 +14,10 @@ export function useAuthLogic() {
 
   React.useEffect(() => {
     if (isAuthenticated) {
-      const from = (location.state as { from?: { pathname: string } })?.from?.pathname || "/"
-      navigate(from, { replace: true })
+      useNavigationHistoryStore.getState().clearOnLogin()
+      navigate("/", { replace: true })
     }
-  }, [isAuthenticated, navigate, location])
+  }, [isAuthenticated, navigate])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -35,12 +35,14 @@ export function useAuthLogic() {
 
     const success = await login({ email, senha })
     if (success) {
+      useNavigationHistoryStore.getState().clearOnLogin()
       navigate("/", { replace: true })
     }
   }
 
   const handleMockLogin = (role: Exclude<UserRole, "MASTER">) => {
     loginAsMockRole(role)
+    useNavigationHistoryStore.getState().clearOnLogin()
     navigate("/", { replace: true })
   }
 

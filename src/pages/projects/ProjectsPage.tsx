@@ -1,20 +1,18 @@
 import React from "react"
+import { useNavigate } from "react-router-dom"
 import { Plus, Search, FolderKanban, X } from "lucide-react"
 import { PageContainer } from "@/components/shared/PageContainer"
 import { PageHeader } from "@/components/shared/PageHeader"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
 import { ProjectCard } from "./components/ProjectCard"
-import { ProjectFormModal } from "./components/ProjectFormModal"
 import { useProjects } from "./hooks/useProjects"
 import type { ProjectStatus } from "@/types/project"
 
 export const ProjectsPage: React.FC = () => {
+  const navigate = useNavigate()
   const {
     projects,
-    totalCount,
-    clients,
     searchQuery,
     setSearchQuery,
     statusFilter,
@@ -22,10 +20,6 @@ export const ProjectsPage: React.FC = () => {
     canCreateProject,
     isSolo,
     isMember,
-    isCreateModalOpen,
-    openCreateModal,
-    closeCreateModal,
-    createProject,
   } = useProjects()
 
   const statusTabs: { label: string; value: ProjectStatus | "all" }[] = [
@@ -45,17 +39,11 @@ export const ProjectsPage: React.FC = () => {
               ? "Obras e projetos onde você está alocado trabalhando no momento."
               : "Gerencie seus projetos, acompanhe medições vinculadas e controle a equipe alocada em cada obra."
           }
-          badge={
-            <Badge className="bg-amber-500 text-slate-950 font-bold hover:bg-amber-400 gap-1 text-[10px]">
-              <FolderKanban className="h-3 w-3" />
-              {totalCount} {totalCount === 1 ? "Projeto" : "Projetos"}
-            </Badge>
-          }
         />
 
         {canCreateProject && (
           <Button
-            onClick={openCreateModal}
+            onClick={() => navigate("/projetos/novo")}
             className="gap-2 bg-slate-900 hover:bg-slate-800 text-white font-semibold shrink-0 shadow-xs"
           >
             <Plus className="h-4 w-4 text-amber-400" />
@@ -127,7 +115,7 @@ export const ProjectsPage: React.FC = () => {
           </div>
           {canCreateProject && !searchQuery && statusFilter === "all" && (
             <Button
-              onClick={openCreateModal}
+              onClick={() => navigate("/projetos/novo")}
               variant="outline"
               className="text-xs gap-1.5 border-slate-300"
             >
@@ -147,15 +135,6 @@ export const ProjectsPage: React.FC = () => {
           ))}
         </div>
       )}
-
-      {/* Modal de Novo Projeto */}
-      <ProjectFormModal
-        isOpen={isCreateModalOpen}
-        clients={clients}
-        isSolo={isSolo}
-        onClose={closeCreateModal}
-        onSubmit={createProject}
-      />
     </PageContainer>
   )
 }

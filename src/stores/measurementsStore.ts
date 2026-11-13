@@ -2,6 +2,7 @@ import { create } from "zustand"
 import { persist, createJSONStorage } from "zustand/middleware"
 import type { Measurement, MeasurementStatus } from "@/types/measurement"
 import { generateShareableToken } from "@/utils/calculations"
+import { toast } from "@/components/ui/use-toast"
 
 export const INITIAL_MEASUREMENTS: Measurement[] = [
   {
@@ -373,14 +374,20 @@ export const useMeasurementsStore = create<MeasurementsState>()(
 
       deleteMeasurement: (id) => {
         const item = get().measurements.find((m) => m.id === id)
+        const msg = item
+          ? `Medição "${item.title}" foi excluída.`
+          : "Medição excluída com sucesso."
+        toast({
+          title: "Medição Excluída",
+          description: msg,
+          variant: "destructive",
+        })
         set((state) => ({
           measurements: state.measurements.filter((m) => m.id !== id),
           selectedMeasurement:
             state.selectedMeasurement?.id === id ? null : state.selectedMeasurement,
           notification: {
-            message: item
-              ? `Medição "${item.title}" foi excluída.`
-              : "Medição excluída.",
+            message: msg,
             type: "info",
           },
         }))
@@ -400,6 +407,12 @@ export const useMeasurementsStore = create<MeasurementsState>()(
           updatedAt: new Date().toISOString(),
         }
 
+        toast({
+          title: "Medição Duplicada",
+          description: `Medição duplicada como "${duplicated.title}".`,
+          variant: "success",
+        })
+
         set((state) => ({
           measurements: [duplicated, ...state.measurements],
           notification: {
@@ -412,6 +425,22 @@ export const useMeasurementsStore = create<MeasurementsState>()(
       },
 
       updateStatus: (id, status, reworkNote) => {
+        const item = get().measurements.find((m) => m.id === id)
+        const msg =
+          status === "approved"
+            ? `Medição "${item?.title || id}" aprovada com sucesso!`
+            : status === "rework"
+            ? `Revisão solicitada para "${item?.title || id}".`
+            : status === "pending"
+            ? `Medição "${item?.title || id}" enviada para conferência com sucesso!`
+            : `Status da medição atualizado para "${status}".`
+
+        toast({
+          title: status === "approved" || status === "pending" ? "Sucesso" : "Atualização",
+          description: msg,
+          variant: status === "approved" || status === "pending" ? "success" : "info",
+        })
+
         set((state) => ({
           measurements: state.measurements.map((m) =>
             m.id === id
@@ -424,13 +453,8 @@ export const useMeasurementsStore = create<MeasurementsState>()(
               : m
           ),
           notification: {
-            message:
-              status === "approved"
-                ? "Medição aprovada com sucesso!"
-                : status === "rework"
-                ? "Revisão solicitada ao colaborador."
-                : `Status atualizado para "${status}".`,
-            type: status === "approved" ? "success" : "info",
+            message: msg,
+            type: status === "approved" || status === "pending" ? "success" : "info",
           },
         }))
       },
@@ -438,12 +462,18 @@ export const useMeasurementsStore = create<MeasurementsState>()(
       bulkApprove: (ids: string[]) => {
         const idSet = new Set(ids)
         const now = new Date().toISOString()
+        const msg = `${ids.length} medições aprovadas em lote com sucesso!`
+        toast({
+          title: "Aprovação em Lote",
+          description: msg,
+          variant: "success",
+        })
         set((state) => ({
           measurements: state.measurements.map((m) =>
             idSet.has(m.id) ? { ...m, status: "approved", updatedAt: now } : m
           ),
           notification: {
-            message: `${ids.length} medições aprovadas em lote com sucesso!`,
+            message: msg,
             type: "success",
           },
         }))
@@ -455,7 +485,26 @@ export const useMeasurementsStore = create<MeasurementsState>()(
       openShareModal: (measurement) => set({ shareModalMeasurement: measurement }),
       closeShareModal: () => set({ shareModalMeasurement: null }),
 
-      setNotification: (notification) => set({ notification }),
+      setNotification: (notification) => {
+        set({ notification })
+        if (notification) {
+          toast({
+            title:
+              notification.type === "success"
+                ? "Sucesso"
+                : notification.type === "error"
+                ? "Atenção"
+                : "Notificação",
+            description: notification.message,
+            variant:
+              notification.type === "error"
+                ? "destructive"
+                : notification.type === "success"
+                ? "success"
+                : "info",
+          })
+        }
+      },
 
       ensureSeedData: () => {
         const current = get().measurements

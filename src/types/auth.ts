@@ -9,6 +9,8 @@ export interface User {
   role: UserRole
   tenantId: string
   avatarUrl?: string
+  specialty?: string
+  phone?: string
   plano?: UserPlan
 }
 
@@ -24,5 +26,6 @@ export interface AuthState {
   error: string | null
   login: (credentials: AuthCredentials) => Promise<boolean>
   loginAsMockRole: (role: Exclude<UserRole, "MASTER">) => void
+  updateProfile: (data: Partial<Pick<User, "name" | "avatarUrl" | "specialty" | "phone">>) => void
   logout: () => void
 }

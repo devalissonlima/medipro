@@ -1,13 +1,14 @@
 import { useState } from "react"
+import { useNavigate } from "react-router-dom"
 import {
   Eye,
   Pencil,
-  Share2,
   Trash2,
-  CopyPlus,
   Building2,
-  Check,
   Copy,
+  Check,
+  MoreHorizontal,
+  Printer,
 } from "lucide-react"
 import {
   Table,
@@ -18,29 +19,37 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu"
 import { MeasurementStatusBadge } from "./MeasurementStatusBadge"
+import { exportMeasurementToPDF } from "@/utils/exportUtils"
 import type { Measurement } from "@/types/measurement"
 import { formatCurrency } from "@/utils/calculations"
 
 interface MeasurementTableProps {
   measurements: Measurement[]
-  onOpenDetail: (measurement: Measurement) => void
+  onOpenDetail?: (measurement: Measurement) => void
   onEdit: (id: string) => void
-  onOpenShare: (measurement: Measurement) => void
+  onOpenShare?: (measurement: Measurement) => void
   onCopyLink: (measurement: Measurement) => void
-  onDuplicate: (id: string) => void
+  onDuplicate?: (id: string) => void
   onDelete: (id: string) => void
+  onFinalize?: (id: string) => void
 }
 
 export function MeasurementTable({
   measurements,
-  onOpenDetail,
   onEdit,
-  onOpenShare,
   onCopyLink,
-  onDuplicate,
   onDelete,
+  onFinalize,
 }: MeasurementTableProps) {
+  const navigate = useNavigate()
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [copiedId, setCopiedId] = useState<string | null>(null)
 
@@ -73,7 +82,7 @@ export function MeasurementTable({
             <TableHead className="font-semibold text-slate-700 text-xs w-32 text-center">
               Status
             </TableHead>
-            <TableHead className="font-semibold text-slate-700 text-xs w-44 text-center">
+            <TableHead className="font-semibold text-slate-700 text-xs w-32 text-center">
               Ações
             </TableHead>
           </TableRow>
@@ -82,18 +91,22 @@ export function MeasurementTable({
         <TableBody>
           {measurements.map((measurement) => {
             const canEdit = measurement.status !== "approved"
+            const canDelete = measurement.status !== "approved"
+            const isDraft = measurement.status === "draft"
 
             return (
               <TableRow
                 key={measurement.id}
                 className="hover:bg-slate-50/70 transition-colors border-b border-slate-100"
               >
-                {/* Título & Localização */}
+                {/* Título & Localização com hover:underline */}
                 <TableCell className="py-3.5">
                   <div className="space-y-0.5">
                     <button
-                      onClick={() => onOpenDetail(measurement)}
-                      className="font-bold text-slate-900 text-sm hover:text-amber-800 transition-colors text-left"
+                      type="button"
+                      onClick={() => navigate(`/medicoes/${measurement.id}`)}
+                      className="font-bold text-slate-900 text-sm hover:text-amber-800 hover:underline transition-colors text-left"
+                      title="Ver detalhes da medição"
                     >
                       {measurement.title}
                     </button>
@@ -139,7 +152,7 @@ export function MeasurementTable({
                   <MeasurementStatusBadge status={measurement.status} />
                 </TableCell>
 
-                {/* Ações */}
+                {/* Ações via DropdownMenu + Botão Rápido Finalizar */}
                 <TableCell className="py-3.5 text-center">
                   {deletingId === measurement.id ? (
                     <div className="flex items-center justify-center gap-1 animate-in fade-in">
@@ -164,93 +177,86 @@ export function MeasurementTable({
                       </Button>
                     </div>
                   ) : (
-                    <div className="flex items-center justify-center gap-1">
-                      {/* Ver Detalhes */}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onOpenDetail(measurement)}
-                        className="h-8 w-8 p-0 text-slate-500 hover:text-slate-900 hover:bg-slate-100"
-                        title="Ver detalhes"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-
-                      {/* Editar Medição (disponível se não estiver aprovada) */}
-                      {canEdit ? (
+                    <div className="flex items-center justify-center gap-1.5">
+                      {/* Botão de Finalizar imediato para rascunhos */}
+                      {isDraft && onFinalize && (
                         <Button
-                          variant="ghost"
                           size="sm"
-                          onClick={() => onEdit(measurement.id)}
-                          className="h-8 w-8 p-0 text-amber-600 hover:text-amber-800 hover:bg-amber-50"
-                          title={
-                            measurement.status === "draft"
-                              ? "Continuar editando rascunho"
-                              : "Editar medição"
-                          }
+                          onClick={() => onFinalize(measurement.id)}
+                          className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-semibold gap-1 px-2.5 shadow-2xs"
+                          title="Finalizar e enviar medição para conferência"
                         >
-                          <Pencil className="h-4 w-4" />
+                          <Check className="h-3.5 w-3.5" />
+                          <span>Finalizar</span>
                         </Button>
-                      ) : (
-                        <div
-                          className="h-8 w-8 flex items-center justify-center opacity-30 cursor-not-allowed text-slate-400"
-                          title="Medição aprovada não pode ser editada"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </div>
                       )}
 
-                      {/* Compartilhar WhatsApp / Modal */}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onOpenShare(measurement)}
-                        className="h-8 w-8 p-0 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50"
-                        title="Compartilhar via WhatsApp"
-                      >
-                        <Share2 className="h-4 w-4" />
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-slate-500 hover:text-slate-900 hover:bg-slate-100"
+                            title="Opções da medição"
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
+                          {canEdit && (
+                            <DropdownMenuItem onClick={() => onEdit(measurement.id)}>
+                              <Pencil className="h-4 w-4 text-amber-500" />
+                              <span>Editar</span>
+                            </DropdownMenuItem>
+                          )}
 
-                      {/* Copiar Link Rápido */}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleCopy(measurement)}
-                        className={`h-8 w-8 p-0 transition-colors ${
-                          copiedId === measurement.id
-                            ? "text-emerald-600 bg-emerald-50"
-                            : "text-slate-500 hover:text-slate-900 hover:bg-slate-100"
-                        }`}
-                        title="Copiar link para WhatsApp"
-                      >
-                        {copiedId === measurement.id ? (
-                          <Check className="h-4 w-4 text-emerald-600" />
-                        ) : (
-                          <Copy className="h-4 w-4" />
-                        )}
-                      </Button>
+                          {isDraft && onFinalize && (
+                            <DropdownMenuItem
+                              onClick={() => onFinalize(measurement.id)}
+                              className="text-emerald-700 focus:text-emerald-800 focus:bg-emerald-50 font-medium"
+                            >
+                              <Check className="h-4 w-4 text-emerald-600" />
+                              <span>Finalizar Medição</span>
+                            </DropdownMenuItem>
+                          )}
 
-                      {/* Duplicar */}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onDuplicate(measurement.id)}
-                        className="h-8 w-8 p-0 text-slate-500 hover:text-slate-900 hover:bg-slate-100"
-                        title="Duplicar medição"
-                      >
-                        <CopyPlus className="h-4 w-4" />
-                      </Button>
+                          <DropdownMenuItem onClick={() => exportMeasurementToPDF(measurement)}>
+                            <Printer className="h-4 w-4 text-blue-500" />
+                            <span>Imprimir / PDF</span>
+                          </DropdownMenuItem>
 
-                      {/* Excluir */}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setDeletingId(measurement.id)}
-                        className="h-8 w-8 p-0 text-slate-400 hover:text-rose-600 hover:bg-rose-50"
-                        title="Excluir medição"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                          <DropdownMenuItem
+                            onClick={() => navigate(`/medicoes/${measurement.id}`)}
+                          >
+                            <Eye className="h-4 w-4 text-slate-500" />
+                            <span>Visualizar Detalhes</span>
+                          </DropdownMenuItem>
+
+                          <DropdownMenuItem onClick={() => handleCopy(measurement)}>
+                            {copiedId === measurement.id ? (
+                              <Check className="h-4 w-4 text-emerald-600" />
+                            ) : (
+                              <Copy className="h-4 w-4 text-slate-500" />
+                            )}
+                            <span>
+                              {copiedId === measurement.id ? "Link Copiado!" : "Copiar Link Direto"}
+                            </span>
+                          </DropdownMenuItem>
+
+                          {canDelete && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => setDeletingId(measurement.id)}
+                                className="text-rose-600 focus:text-rose-700 focus:bg-rose-50"
+                              >
+                                <Trash2 className="h-4 w-4 text-rose-500" />
+                                <span>Excluir</span>
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   )}
                 </TableCell>

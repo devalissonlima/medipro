@@ -8,6 +8,7 @@ import {
   Plus,
   History,
   MapPin,
+  MoreHorizontal,
 } from "lucide-react"
 import {
   Table,
@@ -19,6 +20,14 @@ import {
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu"
+import { useAuthStore } from "@/stores/authStore"
 import type { Client } from "@/types/client"
 import { CLIENT_TYPE_CONFIG } from "@/types/client"
 import { formatCurrency } from "@/utils/calculations"
@@ -39,6 +48,8 @@ export function ClientTable({
   onDelete,
 }: ClientTableProps) {
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const user = useAuthStore((state) => state.user)
+  const isSolo = user?.role === "SOLO"
 
   return (
     <div className="rounded-xl border border-slate-200/90 bg-white overflow-hidden shadow-xs">
@@ -63,7 +74,7 @@ export function ClientTable({
             <TableHead className="font-semibold text-slate-700 text-xs text-right w-36">
               Total Faturado
             </TableHead>
-            <TableHead className="font-semibold text-slate-700 text-xs text-center w-36">
+            <TableHead className="font-semibold text-slate-700 text-xs text-center w-20">
               Ações
             </TableHead>
           </TableRow>
@@ -165,7 +176,7 @@ export function ClientTable({
                   </span>
                 </TableCell>
 
-                {/* Ações */}
+                {/* Ações via DropdownMenu */}
                 <TableCell className="py-3.5 text-center">
                   {deletingId === client.id ? (
                     <div className="flex items-center justify-center gap-1 animate-in fade-in">
@@ -190,51 +201,47 @@ export function ClientTable({
                       </Button>
                     </div>
                   ) : (
-                    <div className="flex items-center justify-center gap-1">
-                      {/* Nova Medição */}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onCreateMeasurement(client)}
-                        className="h-8 w-8 p-0 text-amber-700 hover:text-amber-900 hover:bg-amber-50"
-                        title="Nova Medição Direta"
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-slate-500 hover:text-slate-900 hover:bg-slate-100"
+                          title="Ações do cliente"
+                        >
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-44">
+                        <DropdownMenuItem onClick={() => onOpenHistory(client)}>
+                          <History className="h-4 w-4 text-slate-500" />
+                          <span>Ver Histórico</span>
+                        </DropdownMenuItem>
 
-                      {/* Ver Histórico */}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onOpenHistory(client)}
-                        className="h-8 w-8 p-0 text-slate-500 hover:text-slate-900 hover:bg-slate-100"
-                        title="Histórico de medições"
-                      >
-                        <History className="h-3.5 w-3.5" />
-                      </Button>
+                        {/* Nova Medição restrita a SOLO */}
+                        {isSolo && (
+                          <DropdownMenuItem onClick={() => onCreateMeasurement(client)}>
+                            <Plus className="h-4 w-4 text-amber-500" />
+                            <span>Nova Medição</span>
+                          </DropdownMenuItem>
+                        )}
 
-                      {/* Editar */}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onEdit(client)}
-                        className="h-8 w-8 p-0 text-slate-500 hover:text-slate-900 hover:bg-slate-100"
-                        title="Editar cliente"
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </Button>
+                        <DropdownMenuItem onClick={() => onEdit(client)}>
+                          <Pencil className="h-4 w-4 text-slate-500" />
+                          <span>Editar</span>
+                        </DropdownMenuItem>
 
-                      {/* Excluir */}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setDeletingId(client.id)}
-                        className="h-8 w-8 p-0 text-slate-400 hover:text-rose-600 hover:bg-rose-50"
-                        title="Excluir cliente"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
+                        <DropdownMenuSeparator />
+
+                        <DropdownMenuItem
+                          onClick={() => setDeletingId(client.id)}
+                          className="text-rose-600 focus:text-rose-700 focus:bg-rose-50"
+                        >
+                          <Trash2 className="h-4 w-4 text-rose-500" />
+                          <span>Excluir</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   )}
                 </TableCell>
               </TableRow>

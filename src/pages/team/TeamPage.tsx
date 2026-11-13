@@ -1,6 +1,4 @@
 import {
-  CheckCircle2,
-  AlertCircle,
   HardHat,
 } from "lucide-react"
 import { PageContainer } from "@/components/shared/PageContainer"
@@ -24,46 +22,16 @@ export function TeamPage() {
     statusFilter,
     setStatusFilter,
     statusCounts,
-    notification,
     openInviteModal,
     openEditModal,
     deleteMember,
     toggleMemberStatus,
     resendInvite,
     clearFilters,
-    dismissNotification,
   } = useTeamMembers()
 
   return (
     <PageContainer className="space-y-6 pb-24">
-      {/* Toast Notification Banner */}
-      {notification && (
-        <div
-          className={`flex items-center justify-between rounded-xl p-3.5 text-xs shadow-sm border transition-all animate-in slide-in-from-top-2 ${
-            notification.type === "success"
-              ? "bg-emerald-50 text-emerald-800 border-emerald-200"
-              : notification.type === "error"
-              ? "bg-rose-50 text-rose-800 border-rose-200"
-              : "bg-slate-100 text-slate-800 border-slate-200"
-          }`}
-        >
-          <div className="flex items-center gap-2">
-            {notification.type === "success" ? (
-              <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
-            ) : (
-              <AlertCircle className="h-4 w-4 text-rose-600 shrink-0" />
-            )}
-            <span className="font-medium">{notification.message}</span>
-          </div>
-          <button
-            onClick={dismissNotification}
-            className="text-xs font-semibold hover:underline px-2 py-0.5"
-          >
-            Fechar
-          </button>
-        </div>
-      )}
-
       {/* Cabeçalho da Equipe */}
       <PageHeader
         title="Minha Equipe"

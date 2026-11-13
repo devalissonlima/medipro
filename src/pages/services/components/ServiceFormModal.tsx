@@ -190,7 +190,7 @@ export function ServiceFormModal() {
             <div className="flex gap-2">
               <Input
                 id="service-tags"
-                placeholder="Ex: Alto Risco, Material Rígido..."
+                placeholder="Ex: Andaime, Altura > 3m, Piso Úmido, Noturno..."
                 value={tagInput}
                 onChange={(e) => setTagInput(e.target.value)}
                 onKeyDown={handleKeyDownTag}
@@ -207,6 +207,9 @@ export function ServiceFormModal() {
                 Adicionar
               </Button>
             </div>
+            <p className="text-[11px] text-slate-400">
+              Ex: Andaime, Altura &gt; 3m, Piso Úmido, Noturno (digite e pressione Enter ou clique em Adicionar).
+            </p>
 
             {/* Sugestões rápidas */}
             <div className="flex flex-wrap gap-1 items-center pt-1">
