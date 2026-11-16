@@ -1,9 +1,9 @@
 import {
   LayoutDashboard,
   Layers,
-  Ruler,
+  File,
   TrendingUp,
-  FolderKanban,
+  Briefcase,
   Building2,
   CreditCard,
 } from "lucide-react"
@@ -35,14 +35,14 @@ export const NAVIGATION_ITEMS: NavItem[] = [
   {
     title: "Medições",
     href: "/medicoes",
-    icon: Ruler,
+    icon: File,
     description: "Lançamento de áreas e volumes",
     allowedRoles: ["MASTER", "MEMBER", "SOLO"],
   },
   {
     title: "Projetos",
     href: "/projetos",
-    icon: FolderKanban,
+    icon: Briefcase,
     description: "Obras, medições e equipes alocadas",
     allowedRoles: ["MASTER", "MANAGER", "PROJECT_SUPERVISOR", "MEMBER", "SOLO"],
   },

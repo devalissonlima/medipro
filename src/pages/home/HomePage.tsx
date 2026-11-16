@@ -2,6 +2,7 @@ import React from 'react';
 import { PageContainer } from '@/components/shared/PageContainer';
 import { WelcomeHeader } from './components/WelcomeHeader';
 import { QuickShortcuts } from './components/QuickShortcuts';
+import { RecentAccessSection } from './components/RecentAccessSection';
 import { DailyPulseCards } from './components/DailyPulseCards';
 import { ActivityTimeline24h } from './components/ActivityTimeline24h';
 import { useHomeOverview } from './hooks/useHomeOverview';
@@ -34,6 +35,9 @@ export const HomePage: React.FC = () => {
 
         {/* 1-click Quick Shortcuts grid */}
         <QuickShortcuts pendingCount={totalPendingCount} />
+
+        {/* Recent Projects and Measurements accessed by current user */}
+        <RecentAccessSection />
 
         {/* 24-hour Daily Operational Pulse Cards */}
         <DailyPulseCards summary={dailyPulse} />

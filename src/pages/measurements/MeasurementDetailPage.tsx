@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useParams, useNavigate, Link } from "react-router-dom"
 import { useSmartBack } from "@/hooks/useSmartBack"
 import {
@@ -12,10 +12,13 @@ import {
   Printer,
   Download,
   AlertCircle,
+  AlertTriangle,
   FolderKanban,
   User,
   Copy,
   Check,
+  X,
+  Camera,
   MoreHorizontal,
   FileText,
   Car,
@@ -26,6 +29,13 @@ import {
 } from "lucide-react"
 import { PageContainer } from "@/components/shared/PageContainer"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -36,6 +46,9 @@ import {
 import { MeasurementStatusBadge } from "./components/MeasurementStatusBadge"
 import { ShareLinkModal } from "./components/ShareLinkModal"
 import { useMeasurementsStore } from "@/stores/measurementsStore"
+import { useAuthStore } from "@/stores/authStore"
+import { useRecentAccessStore } from "@/stores/recentAccessStore"
+import { EXCEEDED_REASON_LABELS } from "@/types/measurement"
 import { formatCurrency } from "@/utils/calculations"
 import { exportMeasurementToPDF, exportMeasurementsToCSV } from "@/utils/exportUtils"
 import { toast } from "@/components/ui/use-toast"
@@ -51,11 +64,26 @@ export function MeasurementDetailPage() {
     shareModalMeasurement,
     closeShareModal,
     updateStatus,
+    updateItemAuditStatus,
   } = useMeasurementsStore()
+  const user = useAuthStore((s) => s.user)
+  const trackMeasurementView = useRecentAccessStore((s) => s.trackMeasurementView)
 
   const [isDeleting, setIsDeleting] = useState(false)
+  const [previewPhotoUrl, setPreviewPhotoUrl] = useState<string | null>(null)
+
+  const canAudit =
+    user?.role === "MANAGER" ||
+    user?.role === "PROJECT_SUPERVISOR" ||
+    user?.role === "MASTER"
 
   const measurement = measurements.find((m) => m.id === id)
+
+  useEffect(() => {
+    if (measurement && user?.id) {
+      trackMeasurementView(measurement.id, user.id)
+    }
+  }, [measurement?.id, user?.id, trackMeasurementView])
 
   if (!measurement) {
     return (
@@ -134,7 +162,7 @@ export function MeasurementDetailPage() {
 
               {measurement.projectId && (
                 <Link
-                  to={`/projetos/${measurement.projectId}/visao-geral`}
+                  to={`/projetos/${measurement.projectId}/dashboard`}
                   className="flex items-center gap-1.5 text-amber-700 hover:text-amber-800 font-semibold hover:underline"
                 >
                   <FolderKanban className="h-3.5 w-3.5 text-amber-500 shrink-0" />
@@ -291,7 +319,7 @@ export function MeasurementDetailPage() {
               </span>
               {measurement.projectId ? (
                 <Link
-                  to={`/projetos/${measurement.projectId}/visao-geral`}
+                  to={`/projetos/${measurement.projectId}/dashboard`}
                   className="font-bold text-slate-900 hover:text-amber-600 transition-colors flex items-center gap-1.5 mt-0.5"
                 >
                   <FolderKanban className="h-3.5 w-3.5 text-amber-500 shrink-0" />
@@ -365,31 +393,172 @@ export function MeasurementDetailPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {measurement.items.map((item, index) => (
-                  <tr key={item.id || index} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="p-3.5 font-medium text-slate-900">
-                      {item.serviceName}
-                    </td>
-                    <td className="p-3.5 text-slate-600">
-                      {item.materialName ? (
-                        <span className="inline-flex items-center rounded bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-800">
-                          {item.materialName}
-                        </span>
-                      ) : (
-                        <span className="text-slate-400 italic">Padrão da obra</span>
-                      )}
-                    </td>
-                    <td className="p-3.5 text-center font-mono font-semibold text-slate-800">
-                      {item.quantity} {item.unit}
-                    </td>
-                    <td className="p-3.5 text-right font-mono text-slate-700">
-                      {formatCurrency(item.unitPrice)}
-                    </td>
-                    <td className="p-3.5 text-right font-mono font-bold text-slate-900">
-                      {formatCurrency(item.subtotal)}
-                    </td>
-                  </tr>
-                ))}
+                {measurement.items.map((item, index) => {
+                  const hasAuditAlert = item.isExceeded || item.isOutOfScope
+
+                  return (
+                    <tr key={item.id || index} className="group">
+                      <td colSpan={5} className="p-0">
+                        <div
+                          className={`flex items-center justify-between p-3.5 ${
+                            hasAuditAlert ? "bg-amber-50/25" : ""
+                          }`}
+                        >
+                          <div className="flex-1 min-w-0 pr-4">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-slate-900">
+                                {item.serviceName}
+                              </span>
+                              {item.isOutOfScope && (
+                                <Badge className="bg-amber-100 text-amber-900 border-amber-300 text-[10px] font-bold uppercase">
+                                  Fora de Escopo
+                                </Badge>
+                              )}
+                              {item.isExceeded && item.exceededQuantity && (
+                                <Badge className="bg-orange-100 text-orange-900 border-orange-300 text-[10px] font-bold">
+                                  Excedente: +{item.exceededQuantity.toFixed(2)} {item.unit}
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="mt-0.5 text-slate-500 text-[11px]">
+                              {item.materialName ? (
+                                <span className="inline-flex items-center rounded bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-800">
+                                  {item.materialName}
+                                </span>
+                              ) : (
+                                <span className="text-slate-400 italic">Padrão da obra</span>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-6 shrink-0 text-right">
+                            <div className="w-24 text-center font-mono font-semibold text-slate-800">
+                              {item.quantity} {item.unit}
+                            </div>
+                            <div className="w-24 font-mono text-slate-700">
+                              {formatCurrency(item.unitPrice)}
+                            </div>
+                            <div className="w-28 font-mono font-bold text-slate-900">
+                              {formatCurrency(item.subtotal)}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Bloco de Auditoria do Item */}
+                        {hasAuditAlert && (
+                          <div className="bg-amber-50/30 px-3.5 pb-3 pt-0 border-b border-amber-100">
+                            <div className="rounded-lg border border-amber-200/90 bg-white/95 p-3 text-xs space-y-2.5 shadow-2xs">
+                              <div className="flex flex-wrap items-center justify-between gap-2">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-bold text-slate-800 flex items-center gap-1.5 text-[11px]">
+                                    <AlertTriangle className="h-3.5 w-3.5 text-amber-600" />
+                                    Auditoria de Item:
+                                  </span>
+                                  {item.auditStatus === "pending" && (
+                                    <Badge className="bg-amber-100 text-amber-900 border-amber-300 text-[10px] font-bold">
+                                      Auditoria Pendente
+                                    </Badge>
+                                  )}
+                                  {item.auditStatus === "approved" && (
+                                    <Badge className="bg-emerald-100 text-emerald-900 border-emerald-300 text-[10px] font-bold">
+                                      Item Aprovado
+                                    </Badge>
+                                  )}
+                                  {item.auditStatus === "rejected" && (
+                                    <Badge className="bg-rose-100 text-rose-900 border-rose-300 text-[10px] font-bold">
+                                      Item Rejeitado
+                                    </Badge>
+                                  )}
+                                </div>
+
+                                {canAudit && (
+                                  <div className="flex items-center gap-2">
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      variant="outline"
+                                      disabled={item.auditStatus === "approved"}
+                                      onClick={() =>
+                                        updateItemAuditStatus(
+                                          measurement.id,
+                                          item.id,
+                                          "approved"
+                                        )
+                                      }
+                                      className="h-7 text-[11px] font-semibold text-emerald-700 border-emerald-300 hover:bg-emerald-50 gap-1 px-2.5"
+                                    >
+                                      <Check className="h-3.5 w-3.5 text-emerald-600" />
+                                      Aprovar {item.isOutOfScope ? "Extra" : "Excedente"}
+                                    </Button>
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      variant="outline"
+                                      disabled={item.auditStatus === "rejected"}
+                                      onClick={() =>
+                                        updateItemAuditStatus(
+                                          measurement.id,
+                                          item.id,
+                                          "rejected"
+                                        )
+                                      }
+                                      className="h-7 text-[11px] font-semibold text-rose-700 border-rose-300 hover:bg-rose-50 gap-1 px-2.5"
+                                    >
+                                      <X className="h-3.5 w-3.5 text-rose-600" />
+                                      Rejeitar {item.isOutOfScope ? "Extra" : "Excedente"}
+                                    </Button>
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+                                <div className="sm:col-span-9 space-y-1">
+                                  {item.exceededReason && (
+                                    <p className="text-[11px] text-slate-600">
+                                      <strong>Motivo do Excedente:</strong>{" "}
+                                      <span className="text-slate-800">
+                                        {EXCEEDED_REASON_LABELS[item.exceededReason] ||
+                                          item.exceededReason}
+                                      </span>
+                                    </p>
+                                  )}
+                                  {item.justificationNotes && (
+                                    <p className="text-[11px] text-slate-600 italic">
+                                      <strong>Justificativa do instalador:</strong> &ldquo;
+                                      {item.justificationNotes}&rdquo;
+                                    </p>
+                                  )}
+                                </div>
+
+                                {item.evidencePhotoUrl && (
+                                  <div className="sm:col-span-3 flex items-center justify-start sm:justify-end">
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        setPreviewPhotoUrl(item.evidencePhotoUrl || null)
+                                      }
+                                      className="group relative rounded-lg border border-slate-200 overflow-hidden hover:border-amber-400 transition-all shadow-2xs"
+                                      title="Clique para ampliar a foto de evidência da obra"
+                                    >
+                                      <img
+                                        src={item.evidencePhotoUrl}
+                                        alt="Foto de Evidência"
+                                        className="h-12 w-20 object-cover group-hover:scale-105 transition-transform"
+                                      />
+                                      <div className="absolute inset-0 bg-slate-900/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                        <Camera className="h-3.5 w-3.5 text-white" />
+                                      </div>
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>
@@ -495,6 +664,31 @@ export function MeasurementDetailPage() {
         measurement={shareModalMeasurement}
         onClose={closeShareModal}
       />
+
+      {/* Modal Lightbox para visualização de foto de evidência */}
+      <Dialog
+        open={!!previewPhotoUrl}
+        onOpenChange={(open) => !open && setPreviewPhotoUrl(null)}
+      >
+        <DialogContent
+          onClose={() => setPreviewPhotoUrl(null)}
+          className="max-w-2xl p-4 bg-white"
+        >
+          <DialogHeader>
+            <DialogTitle className="text-sm font-bold text-slate-900 flex items-center gap-2">
+              <Camera className="h-4 w-4 text-amber-600" />
+              Foto de Evidência da Obra
+            </DialogTitle>
+          </DialogHeader>
+          <div className="mt-2 rounded-xl overflow-hidden border border-slate-200 bg-slate-950 flex items-center justify-center max-h-[70vh]">
+            <img
+              src={previewPhotoUrl || ""}
+              alt="Foto de Evidência da Obra"
+              className="max-h-[70vh] w-auto object-contain"
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </PageContainer>
   )
 }

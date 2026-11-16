@@ -1,5 +1,5 @@
-import { useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { useState, useMemo } from "react"
+import { useNavigate, useSearchParams } from "react-router-dom"
 import { useSmartBack } from "@/hooks/useSmartBack"
 import {
   ArrowLeft,
@@ -7,6 +7,7 @@ import {
   Calendar,
   MapPin,
   FolderKanban,
+  Folder,
   DollarSign,
   Ruler,
   FileText,
@@ -23,18 +24,29 @@ import { Select } from "@/components/ui/select"
 import { useClientsStore } from "@/stores/clientsStore"
 import { useProjectsStore } from "@/stores/projectsStore"
 import { useAuthStore } from "@/stores/authStore"
-import type { ProjectStatus, BillingCondition } from "@/types/project"
+import { getProjectUrl } from "@/utils/projectRoutes"
+import { ProjectScopeBuilder } from "./components/form/ProjectScopeBuilder"
+import type { ProjectStatus, BillingCondition, ProjectScopeItem } from "@/types/project"
 
 export function NewProjectPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const goBack = useSmartBack("/projetos")
   const { clients } = useClientsStore()
-  const { addProject } = useProjectsStore()
+  const { addProject, folders } = useProjectsStore()
   const user = useAuthStore((state) => state.user)
+
+  const tenantFolders = useMemo(
+    () => (folders || []).filter((f) => f.tenantId === user?.tenantId),
+    [folders, user?.tenantId]
+  )
 
   // Bloco 1: Dados Base
   const [title, setTitle] = useState("")
   const [clientId, setClientId] = useState(clients[0]?.id || "")
+  const [folderId, setFolderId] = useState<string>(
+    searchParams.get("folderId") || ""
+  )
   const [status, setStatus] = useState<ProjectStatus>("active")
 
   // Bloco 2: Financeiro e Comercial
@@ -53,6 +65,9 @@ export function NewProjectPage() {
   const [endDate, setEndDate] = useState("")
   const [address, setAddress] = useState("")
   const [accessRules, setAccessRules] = useState("")
+
+  // Bloco 5: Escopo Previsto / Planilha de Quantidades
+  const [scopeItems, setScopeItems] = useState<ProjectScopeItem[]>([])
 
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -89,6 +104,7 @@ export function NewProjectPage() {
 
     const newProject = addProject({
       tenantId: user.tenantId,
+      folderId: folderId || null,
       clientId,
       clientName: selectedClient?.name || "Cliente",
       title: title.trim(),
@@ -104,11 +120,12 @@ export function NewProjectPage() {
       areaUnit,
       materialsInvolved: materialsInvolved.trim() || undefined,
       accessRules: accessRules.trim() || undefined,
+      scopeItems: scopeItems.length > 0 ? scopeItems : undefined,
       maxMembers: planCapacity,
     })
 
     setIsSubmitting(false)
-    navigate(`/projetos/${newProject.id}/visao-geral`)
+    navigate(getProjectUrl(newProject, "dashboard"))
   }
 
   return (
@@ -205,7 +222,7 @@ export function NewProjectPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-slate-700">
                   Status Inicial
@@ -221,6 +238,25 @@ export function NewProjectPage() {
                 </Select>
               </div>
 
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                  <Folder className="h-3.5 w-3.5 text-amber-500" />
+                  Pasta (Opcional)
+                </label>
+                <Select
+                  value={folderId}
+                  onChange={(e) => setFolderId(e.target.value)}
+                  className="bg-white text-xs h-9"
+                >
+                  <option value="">Sem pasta (Raiz dos Projetos)</option>
+                  {tenantFolders.map((f) => (
+                    <option key={f.id} value={f.id}>
+                      {f.name}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center gap-3">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600 shrink-0">
                   <Users className="h-4 w-4" />
@@ -230,7 +266,7 @@ export function NewProjectPage() {
                   <span className="text-[11px] text-slate-500">
                     {isSolo
                       ? "1 vaga ativa (Plano Solo)."
-                      : "Até 5 colaboradores ativos na obra (definido pelo seu Plano Pro)."}
+                      : "Até 5 colaboradores ativos na obra (Plano Pro)."}
                   </span>
                 </div>
               </div>
@@ -425,6 +461,9 @@ export function NewProjectPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Bloco 5: Escopo Previsto / Planilha de Quantidades */}
+        <ProjectScopeBuilder items={scopeItems} onChange={setScopeItems} />
 
         {/* Rodapé de Envio */}
         <div className="flex items-center justify-end gap-3 pt-3">

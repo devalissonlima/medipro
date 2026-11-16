@@ -6,10 +6,10 @@ import { useMeasurementsStore } from "@/stores/measurementsStore"
 export function AppBreadcrumb() {
   const location = useLocation()
   const pathname = location.pathname
-  const { projects } = useProjectsStore()
+  const { projects, folders } = useProjectsStore()
   const { measurements } = useMeasurementsStore()
 
-  // Se estiver na raiz "/", mostra apenas "Início"
+  // O item "Início" existe apenas na página de início ("/")
   if (pathname === "/") {
     return (
       <nav aria-label="Breadcrumb" className="flex items-center text-xs text-slate-500 font-medium">
@@ -22,9 +22,7 @@ export function AppBreadcrumb() {
   }
 
   const segments = pathname.split("/").filter(Boolean)
-  const items: { label: string; href?: string; isCurrent?: boolean }[] = [
-    { label: "Início", href: "/" },
-  ]
+  const items: { label: string; href?: string; isCurrent?: boolean }[] = []
 
   const first = segments[0]
 
@@ -36,10 +34,16 @@ export function AppBreadcrumb() {
     items.push({ label: "Meus Clientes", isCurrent: true })
   } else if (first === "plano") {
     items.push({ label: "Meu Plano", isCurrent: true })
+  } else if (first === "configuracoes") {
+    items.push({ label: "Configurações", isCurrent: true })
   } else if (first === "perfil" || first === "usuario") {
     items.push({ label: "Minha Conta", isCurrent: true })
   } else if (first === "medicoes") {
-    items.push({ label: "Medições", href: segments.length > 1 ? "/medicoes" : undefined, isCurrent: segments.length === 1 })
+    items.push({
+      label: "Medições",
+      href: segments.length > 1 ? "/medicoes" : undefined,
+      isCurrent: segments.length === 1,
+    })
 
     if (segments[1] === "nova") {
       items.push({ label: "Nova Medição", isCurrent: true })
@@ -58,26 +62,58 @@ export function AppBreadcrumb() {
       })
     }
   } else if (first === "projetos") {
-    items.push({ label: "Projetos", href: segments.length > 1 ? "/projetos" : undefined, isCurrent: segments.length === 1 })
+    items.push({
+      label: "Projetos",
+      href: segments.length > 1 ? "/projetos" : undefined,
+      isCurrent: segments.length === 1,
+    })
 
     if (segments[1] === "novo") {
       items.push({ label: "Novo Projeto", isCurrent: true })
-    } else if (segments[1]) {
+    } else if (segments.length === 2) {
+      // Rota de pasta: /projetos/:folderId
+      const folder = (folders || []).find((f) => f.id === segments[1])
+      const project = projects.find((p) => p.id === segments[1])
+      items.push({
+        label: folder ? folder.name : project ? project.title : "Pasta",
+        isCurrent: true,
+      })
+    } else if (segments.length === 3) {
+      // Rota de projeto na raiz: /projetos/:id/:tab -> Exibe apenas: Projetos > [Pasta se houver] > Projeto
       const project = projects.find((p) => p.id === segments[1])
       const projectTitle = project ? project.title : "Obra"
-      const hasSubTab = !!segments[2]
+
+      if (project?.folderId) {
+        const folder = (folders || []).find((f) => f.id === project.folderId)
+        if (folder) {
+          items.push({
+            label: folder.name,
+            href: `/projetos/${folder.id}`,
+          })
+        }
+      }
 
       items.push({
         label: projectTitle,
-        href: hasSubTab ? `/projetos/${segments[1]}/visao-geral` : undefined,
-        isCurrent: !hasSubTab,
+        isCurrent: true,
+      })
+    } else if (segments.length >= 4) {
+      // Rota de projeto dentro de pasta: /projetos/:folderId/:id/:tab -> Exibe apenas: Projetos > Pasta > Projeto
+      const folderId = segments[1]
+      const projectId = segments[2]
+
+      const folder = (folders || []).find((f) => f.id === folderId)
+      const project = projects.find((p) => p.id === projectId)
+
+      items.push({
+        label: folder ? folder.name : "Pasta",
+        href: `/projetos/${folderId}`,
       })
 
-      if (segments[2] === "visao-geral") {
-        items.push({ label: "Visão Geral", isCurrent: true })
-      } else if (segments[2] === "equipe") {
-        items.push({ label: "Equipe da Obra", isCurrent: true })
-      }
+      items.push({
+        label: project ? project.title : "Obra",
+        isCurrent: true,
+      })
     }
   }
 

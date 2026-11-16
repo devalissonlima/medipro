@@ -2,9 +2,29 @@ export type ProjectStatus = "active" | "planning" | "paused" | "completed"
 
 export type BillingCondition = "weekly" | "biweekly" | "by_stage" | "on_completion"
 
+export interface ProjectFolder {
+  id: string
+  tenantId: string
+  name: string
+  color?: string // Cor identificadora opcional (ex: azul, verde, âmbar, roxo)
+  createdAt: string
+}
+
+export interface ProjectScopeItem {
+  id: string
+  projectId: string
+  masterServiceId: string
+  serviceName: string
+  environment?: string // ex: 'Cozinha', 'Banheiro Suíte'
+  unit: string
+  maxQuantity: number
+  executedQuantity: number // Soma das medições já aprovadas/registradas
+}
+
 export interface Project {
   id: string
   tenantId: string
+  folderId?: string | null
   clientId: string
   clientName?: string
   title: string
@@ -24,6 +44,7 @@ export interface Project {
   areaUnit?: string // ex: 'm²', 'm linear', 'unidade'
   materialsInvolved?: string // Principais Materiais envolvidos
   accessRules?: string // Observações / Regras de acesso ao local
+  scopeItems?: ProjectScopeItem[] // Escopo Previsto / Planilha de Quantidades
 
   maxMembers: number // Limite de vagas herdado automaticamente do Plano do Tenant
   createdAt: string
