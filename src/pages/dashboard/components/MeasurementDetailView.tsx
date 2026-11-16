@@ -1,3 +1,4 @@
+import React, { useState } from "react"
 import {
   CheckCircle2,
   RotateCcw,
@@ -6,11 +7,24 @@ import {
   Utensils,
   Wrench,
   AlertCircle,
+  AlertTriangle,
   FileText,
   ShieldCheck,
+  Check,
+  X,
+  Camera,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import type { Measurement } from "@/types/measurement"
+import { Badge } from "@/components/ui/badge"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { useMeasurementsStore } from "@/stores/measurementsStore"
+import { useAuthStore } from "@/stores/authStore"
+import { EXCEEDED_REASON_LABELS, type Measurement } from "@/types/measurement"
 import { formatCurrency } from "@/utils/calculations"
 
 interface MeasurementDetailViewProps {
@@ -31,6 +45,17 @@ export function MeasurementDetailView({
   headerActions,
 }: MeasurementDetailViewProps) {
   const isPending = measurement.status === "pending"
+  const updateItemAuditStatus = useMeasurementsStore(
+    (s) => s.updateItemAuditStatus
+  )
+  const user = useAuthStore((s) => s.user)
+  const [previewPhotoUrl, setPreviewPhotoUrl] = useState<string | null>(null)
+
+  const canAudit =
+    !readOnly &&
+    (user?.role === "MANAGER" ||
+      user?.role === "PROJECT_SUPERVISOR" ||
+      user?.role === "MASTER")
 
   return (
     <div className="bg-slate-50/90 border-t border-slate-200/90 p-4 sm:p-6 space-y-5 animate-in fade-in duration-200">
@@ -76,31 +101,169 @@ export function MeasurementDetailView({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {measurement.items.map((item) => (
-                <tr key={item.id} className="hover:bg-slate-50/50">
-                  <td className="p-3 font-medium text-slate-900">
-                    {item.serviceName}
-                  </td>
-                  <td className="p-3 text-slate-600">
-                    {item.materialName ? (
-                      <span className="inline-flex items-center rounded bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-800">
-                        {item.materialName}
-                      </span>
-                    ) : (
-                      <span className="text-slate-400 italic">Padrão de obra</span>
+              {measurement.items.map((item) => {
+                const hasAuditAlert = item.isExceeded || item.isOutOfScope
+
+                return (
+                  <React.Fragment key={item.id}>
+                    <tr
+                      className={`hover:bg-slate-50/50 transition-colors ${
+                        hasAuditAlert ? "bg-amber-50/30" : ""
+                      }`}
+                    >
+                      <td className="p-3 font-medium text-slate-900">
+                        <div className="flex flex-col gap-1">
+                          <span className="font-semibold">{item.serviceName}</span>
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            {item.isOutOfScope && (
+                              <Badge className="bg-amber-100 text-amber-900 border-amber-300 text-[10px] font-bold uppercase">
+                                Fora de Escopo
+                              </Badge>
+                            )}
+                            {item.isExceeded && item.exceededQuantity && (
+                              <Badge className="bg-orange-100 text-orange-900 border-orange-300 text-[10px] font-bold">
+                                Excedente: +{item.exceededQuantity.toFixed(2)} {item.unit}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-3 text-slate-600">
+                        {item.materialName ? (
+                          <span className="inline-flex items-center rounded bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-800">
+                            {item.materialName}
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 italic">Padrão de obra</span>
+                        )}
+                      </td>
+                      <td className="p-3 text-center font-mono font-semibold text-slate-800">
+                        {item.quantity} {item.unit}
+                      </td>
+                      <td className="p-3 text-right font-mono text-slate-700">
+                        {formatCurrency(item.unitPrice)}
+                      </td>
+                      <td className="p-3 text-right font-mono font-bold text-slate-900">
+                        {formatCurrency(item.subtotal)}
+                      </td>
+                    </tr>
+
+                    {/* Bloco de Auditoria do Item (Excedente ou Fora de Escopo) */}
+                    {hasAuditAlert && (
+                      <tr className="bg-amber-50/30 border-b border-amber-100">
+                        <td colSpan={5} className="p-3 pt-0">
+                          <div className="rounded-lg border border-amber-200/90 bg-white/95 p-3 text-xs space-y-2.5 shadow-2xs">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <div className="flex items-center gap-2">
+                                <span className="font-bold text-slate-800 flex items-center gap-1.5 text-[11px]">
+                                  <AlertTriangle className="h-3.5 w-3.5 text-amber-600" />
+                                  Auditoria de Item:
+                                </span>
+                                {item.auditStatus === "pending" && (
+                                  <Badge className="bg-amber-100 text-amber-900 border-amber-300 text-[10px] font-bold">
+                                    Auditoria Pendente
+                                  </Badge>
+                                )}
+                                {item.auditStatus === "approved" && (
+                                  <Badge className="bg-emerald-100 text-emerald-900 border-emerald-300 text-[10px] font-bold">
+                                    Item Aprovado
+                                  </Badge>
+                                )}
+                                {item.auditStatus === "rejected" && (
+                                  <Badge className="bg-rose-100 text-rose-900 border-rose-300 text-[10px] font-bold">
+                                    Item Rejeitado
+                                  </Badge>
+                                )}
+                              </div>
+
+                              {canAudit && (
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    disabled={item.auditStatus === "approved"}
+                                    onClick={() =>
+                                      updateItemAuditStatus(
+                                        measurement.id,
+                                        item.id,
+                                        "approved"
+                                      )
+                                    }
+                                    className="h-7 text-[11px] font-semibold text-emerald-700 border-emerald-300 hover:bg-emerald-50 gap-1 px-2.5"
+                                  >
+                                    <Check className="h-3.5 w-3.5 text-emerald-600" />
+                                    Aprovar {item.isOutOfScope ? "Extra" : "Excedente"}
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    disabled={item.auditStatus === "rejected"}
+                                    onClick={() =>
+                                      updateItemAuditStatus(
+                                        measurement.id,
+                                        item.id,
+                                        "rejected"
+                                      )
+                                    }
+                                    className="h-7 text-[11px] font-semibold text-rose-700 border-rose-300 hover:bg-rose-50 gap-1 px-2.5"
+                                  >
+                                    <X className="h-3.5 w-3.5 text-rose-600" />
+                                    Rejeitar {item.isOutOfScope ? "Extra" : "Excedente"}
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+                              <div className="sm:col-span-9 space-y-1">
+                                {item.exceededReason && (
+                                  <p className="text-[11px] text-slate-600">
+                                    <strong>Motivo do Excedente:</strong>{" "}
+                                    <span className="text-slate-800">
+                                      {EXCEEDED_REASON_LABELS[item.exceededReason] ||
+                                        item.exceededReason}
+                                    </span>
+                                  </p>
+                                )}
+                                {item.justificationNotes && (
+                                  <p className="text-[11px] text-slate-600 italic">
+                                    <strong>Justificativa do instalador:</strong> &ldquo;
+                                    {item.justificationNotes}&rdquo;
+                                  </p>
+                                )}
+                              </div>
+
+                              {item.evidencePhotoUrl && (
+                                <div className="sm:col-span-3 flex items-center justify-start sm:justify-end">
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setPreviewPhotoUrl(item.evidencePhotoUrl || null)
+                                    }
+                                    className="group relative rounded-lg border border-slate-200 overflow-hidden hover:border-amber-400 transition-all shadow-2xs"
+                                    title="Clique para ampliar a foto de evidência da obra"
+                                  >
+                                    <img
+                                      src={item.evidencePhotoUrl}
+                                      alt="Foto de Evidência"
+                                      className="h-12 w-20 object-cover group-hover:scale-105 transition-transform"
+                                    />
+                                    <div className="absolute inset-0 bg-slate-900/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                      <Camera className="h-3.5 w-3.5 text-white" />
+                                    </div>
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
                     )}
-                  </td>
-                  <td className="p-3 text-center font-mono font-semibold text-slate-800">
-                    {item.quantity} {item.unit}
-                  </td>
-                  <td className="p-3 text-right font-mono text-slate-700">
-                    {formatCurrency(item.unitPrice)}
-                  </td>
-                  <td className="p-3 text-right font-mono font-bold text-slate-900">
-                    {formatCurrency(item.subtotal)}
-                  </td>
-                </tr>
-              ))}
+                  </React.Fragment>
+                )
+              })}
             </tbody>
           </table>
         </div>
@@ -236,6 +399,31 @@ export function MeasurementDetailView({
           </div>
         )}
       </div>
+
+      {/* Modal Lightbox para visualização de foto de evidência */}
+      <Dialog
+        open={!!previewPhotoUrl}
+        onOpenChange={(open) => !open && setPreviewPhotoUrl(null)}
+      >
+        <DialogContent
+          onClose={() => setPreviewPhotoUrl(null)}
+          className="max-w-2xl p-4 bg-white"
+        >
+          <DialogHeader>
+            <DialogTitle className="text-sm font-bold text-slate-900 flex items-center gap-2">
+              <Camera className="h-4 w-4 text-amber-600" />
+              Foto de Evidência da Obra
+            </DialogTitle>
+          </DialogHeader>
+          <div className="mt-2 rounded-xl overflow-hidden border border-slate-200 bg-slate-950 flex items-center justify-center max-h-[70vh]">
+            <img
+              src={previewPhotoUrl || ""}
+              alt="Foto de Evidência da Obra"
+              className="max-h-[70vh] w-auto object-contain"
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

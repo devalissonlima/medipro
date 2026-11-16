@@ -3,7 +3,7 @@ import {
   Plus,
   Search,
   X,
-  Ruler,
+  File,
   CheckCircle2,
   Clock,
   DollarSign,
@@ -198,7 +198,7 @@ export function MeasurementsPage() {
       {measurements.length === 0 ? (
         <div className="flex min-h-[300px] flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center shadow-xs">
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 border border-amber-200 mb-3">
-            <Ruler className="h-7 w-7" />
+            <File className="h-7 w-7" />
           </div>
           <h3 className="text-base font-bold text-slate-900">
             Nenhuma medição encontrada

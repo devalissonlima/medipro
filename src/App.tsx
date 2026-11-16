@@ -14,6 +14,7 @@ import { ProjectDetailPage } from "@/pages/projects/ProjectDetailPage"
 import { ClientsPage } from "@/pages/clients/ClientsPage"
 import { PlanPage } from "@/pages/plan/PlanPage"
 import { ProfilePage } from "@/pages/profile/ProfilePage"
+import { SettingsPage } from "@/pages/settings/SettingsPage"
 import { Toaster } from "@/components/ui/toaster"
 import { NavigationHistoryTracker } from "@/components/shared/NavigationHistoryTracker"
 
@@ -69,9 +70,20 @@ export default function App() {
             >
               <Route path="/projetos" element={<ProjectsPage />} />
               <Route path="/projetos/novo" element={<NewProjectPage />} />
-              <Route path="/projetos/:id" element={<Navigate to="visao-geral" replace />} />
-              <Route path="/projetos/:id/visao-geral" element={<ProjectDetailPage />} />
+              <Route path="/projetos/:folderId" element={<ProjectsPage />} />
+
+              {/* Rotas de Projeto Solto (Raiz) */}
+              <Route path="/projetos/:id/visao-geral" element={<Navigate to="../dashboard" replace />} />
+              <Route path="/projetos/:id/dashboard" element={<ProjectDetailPage />} />
+              <Route path="/projetos/:id/medicoes" element={<ProjectDetailPage />} />
               <Route path="/projetos/:id/equipe" element={<ProjectDetailPage />} />
+
+              {/* Rotas de Projeto dentro de Pasta: /projetos/:folderId/:id/* */}
+              <Route path="/projetos/:folderId/:id" element={<Navigate to="dashboard" replace />} />
+              <Route path="/projetos/:folderId/:id/visao-geral" element={<Navigate to="../dashboard" replace />} />
+              <Route path="/projetos/:folderId/:id/dashboard" element={<ProjectDetailPage />} />
+              <Route path="/projetos/:folderId/:id/medicoes" element={<ProjectDetailPage />} />
+              <Route path="/projetos/:folderId/:id/equipe" element={<ProjectDetailPage />} />
             </Route>
 
             {/* Clientes: MANAGER, PROJECT_SUPERVISOR, SOLO e MASTER */}
@@ -88,6 +100,11 @@ export default function App() {
             {/* Meu Plano: MANAGER, SOLO e MASTER */}
             <Route element={<ProtectedRoute allowedRoles={["MASTER", "MANAGER", "SOLO"]} />}>
               <Route path="/plano" element={<PlanPage />} />
+            </Route>
+
+            {/* Configurações da Empresa: Exclusivo MANAGER e MASTER */}
+            <Route element={<ProtectedRoute allowedRoles={["MASTER", "MANAGER"]} />}>
+              <Route path="/configuracoes" element={<SettingsPage />} />
             </Route>
           </Route>
         </Route>

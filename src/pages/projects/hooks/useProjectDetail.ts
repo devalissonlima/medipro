@@ -5,7 +5,7 @@ import { useMeasurementsStore } from "@/stores/measurementsStore"
 import { useClientsStore } from "@/stores/clientsStore"
 import type { ProjectMember } from "@/types/project"
 
-export type ProjectDetailTab = "overview" | "team"
+export type ProjectDetailTab = "dashboard" | "measurements" | "team"
 
 export function useProjectDetail(projectId: string) {
   const user = useAuthStore((state) => state.user)
@@ -21,7 +21,7 @@ export function useProjectDetail(projectId: string) {
     useMeasurementsStore()
   const { clients } = useClientsStore()
 
-  const [activeTab, setActiveTab] = useState<ProjectDetailTab>("overview")
+  const [activeTab, setActiveTab] = useState<ProjectDetailTab>("dashboard")
   const [reworkMeasurementId, setReworkMeasurementId] = useState<string | null>(null)
   const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false)
 
@@ -105,11 +105,21 @@ export function useProjectDetail(projectId: string) {
       (m) => m.status === "pending"
     ).length
 
+    const approvedCount = projectMeasurements.filter(
+      (m) => m.status === "approved"
+    ).length
+
+    const draftCount = projectMeasurements.filter(
+      (m) => m.status === "draft"
+    ).length
+
     return {
       approvedTotal,
       pendingTotal,
       reworkCount,
       pendingCount,
+      approvedCount,
+      draftCount,
       totalCount: projectMeasurements.length,
     }
   }, [projectMeasurements])

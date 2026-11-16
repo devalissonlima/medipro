@@ -1,6 +1,48 @@
 import { create } from "zustand"
 import { persist, createJSONStorage } from "zustand/middleware"
-import type { Project, ProjectMember, ProjectStatus } from "@/types/project"
+import { toast } from "@/components/ui/use-toast"
+import type {
+  Project,
+  ProjectMember,
+  ProjectStatus,
+  ProjectScopeItem,
+  ProjectFolder,
+} from "@/types/project"
+
+function generateGuid(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID()
+  }
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0
+    const v = c === "x" ? r : (r & 0x3) | 0x8
+    return v.toString(16)
+  })
+}
+
+export const INITIAL_FOLDERS: ProjectFolder[] = [
+  {
+    id: "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+    tenantId: "tenant_01",
+    name: "Construtora Horizonte",
+    color: "amber",
+    createdAt: "2026-10-01T10:00:00Z",
+  },
+  {
+    id: "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e",
+    tenantId: "tenant_01",
+    name: "Obras Litoral",
+    color: "blue",
+    createdAt: "2026-10-02T11:00:00Z",
+  },
+  {
+    id: "c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f",
+    tenantId: "tenant_solo_01",
+    name: "Obras Residenciais SP",
+    color: "emerald",
+    createdAt: "2026-10-05T09:00:00Z",
+  },
+]
 
 export const INITIAL_PROJECTS: Project[] = [
   {
@@ -15,6 +57,48 @@ export const INITIAL_PROJECTS: Project[] = [
     endDate: "2026-12-15",
     status: "active",
     maxMembers: 5,
+    scopeItems: [
+      {
+        id: "scope-101",
+        projectId: "proj-001",
+        masterServiceId: "mst-001",
+        serviceName: "Assentamento de Mármore Travertino",
+        environment: "Cozinha Ilha & Gourmet",
+        unit: "m²",
+        maxQuantity: 15.0,
+        executedQuantity: 8.5,
+      },
+      {
+        id: "scope-102",
+        projectId: "proj-001",
+        masterServiceId: "mst-002",
+        serviceName: "Corte em Meia Esquadria 45°",
+        environment: "Bordas da Bancada",
+        unit: "m linear",
+        maxQuantity: 18.0,
+        executedQuantity: 11.2,
+      },
+      {
+        id: "scope-103",
+        projectId: "proj-001",
+        masterServiceId: "mst-003",
+        serviceName: "Furação e Recorte de Cuba Esculpida",
+        environment: "Cozinha",
+        unit: "unidade",
+        maxQuantity: 2.0,
+        executedQuantity: 2.0,
+      },
+      {
+        id: "scope-104",
+        projectId: "proj-001",
+        masterServiceId: "mst-005",
+        serviceName: "Instalação de Ilha Gourmet & Bancada",
+        environment: "Espaço Gourmet",
+        unit: "unidade",
+        maxQuantity: 1.0,
+        executedQuantity: 0,
+      },
+    ],
     createdAt: "2026-10-18T09:00:00Z",
   },
   {
@@ -29,11 +113,44 @@ export const INITIAL_PROJECTS: Project[] = [
     endDate: "2026-11-30",
     status: "active",
     maxMembers: 5,
+    scopeItems: [
+      {
+        id: "scope-201",
+        projectId: "proj-002",
+        masterServiceId: "mst-006",
+        serviceName: "Revestimento Porcelanato Grandes Formatos",
+        environment: "Suíte Master",
+        unit: "m²",
+        maxQuantity: 25.0,
+        executedQuantity: 16.4,
+      },
+      {
+        id: "scope-202",
+        projectId: "proj-002",
+        masterServiceId: "mst-002",
+        serviceName: "Corte em Meia Esquadria 45°",
+        environment: "Nichos e Bancadas",
+        unit: "m linear",
+        maxQuantity: 12.0,
+        executedQuantity: 8.6,
+      },
+      {
+        id: "scope-203",
+        projectId: "proj-002",
+        masterServiceId: "mst-008",
+        serviceName: "Corte e Instalação de Nicho",
+        environment: "Box Banheiro",
+        unit: "unidade",
+        maxQuantity: 3.0,
+        executedQuantity: 0,
+      },
+    ],
     createdAt: "2026-10-25T14:00:00Z",
   },
   {
     id: "proj-003",
     tenantId: "tenant_01",
+    folderId: "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
     clientId: "cli-003",
     clientName: "Construtora Silva & Ramos",
     title: "Edifício Horizon & Quinta da Baroneza",
@@ -43,6 +160,28 @@ export const INITIAL_PROJECTS: Project[] = [
     endDate: "2027-01-20",
     status: "active",
     maxMembers: 6,
+    scopeItems: [
+      {
+        id: "scope-301",
+        projectId: "proj-003",
+        masterServiceId: "mst-004",
+        serviceName: "Polimento e Cristalização de Rochas",
+        environment: "Hall de Entrada",
+        unit: "m²",
+        maxQuantity: 40.0,
+        executedQuantity: 24.0,
+      },
+      {
+        id: "scope-302",
+        projectId: "proj-003",
+        masterServiceId: "mst-005",
+        serviceName: "Instalação de Ilha Gourmet & Bancada",
+        environment: "Recepção",
+        unit: "unidade",
+        maxQuantity: 2.0,
+        executedQuantity: 1.0,
+      },
+    ],
     createdAt: "2026-10-05T10:30:00Z",
   },
   {
@@ -203,13 +342,20 @@ export const INITIAL_PROJECT_MEMBERS: ProjectMember[] = [
 interface ProjectsState {
   projects: Project[]
   members: ProjectMember[]
+  folders: ProjectFolder[]
 
   addProject: (
     data: Omit<Project, "id" | "createdAt" | "maxMembers"> & { maxMembers?: number }
   ) => Project
   updateProject: (id: string, data: Partial<Project>) => void
+  updateProjectScope: (projectId: string, scopeItems: ProjectScopeItem[]) => void
   updateProjectStatus: (id: string, status: ProjectStatus) => void
   deleteProject: (id: string) => void
+
+  createFolder: (data: { name: string; tenantId: string; color?: string }) => ProjectFolder
+  renameFolder: (folderId: string, newName: string, color?: string) => void
+  deleteFolder: (folderId: string) => void
+  moveProjectToFolder: (projectId: string, folderId: string | null) => void
 
   addProjectMember: (
     member: Omit<ProjectMember, "id">
@@ -225,6 +371,7 @@ export const useProjectsStore = create<ProjectsState>()(
     (set, get) => ({
       projects: INITIAL_PROJECTS,
       members: INITIAL_PROJECT_MEMBERS,
+      folders: INITIAL_FOLDERS,
 
       addProject: (data) => {
         const newProject: Project = {
@@ -247,6 +394,14 @@ export const useProjectsStore = create<ProjectsState>()(
         }))
       },
 
+      updateProjectScope: (projectId, scopeItems) => {
+        set((state) => ({
+          projects: state.projects.map((p) =>
+            p.id === projectId ? { ...p, scopeItems } : p
+          ),
+        }))
+      },
+
       updateProjectStatus: (id, status) => {
         set((state) => ({
           projects: state.projects.map((p) =>
@@ -260,6 +415,81 @@ export const useProjectsStore = create<ProjectsState>()(
           projects: state.projects.filter((p) => p.id !== id),
           members: state.members.filter((m) => m.projectId !== id),
         }))
+      },
+
+      createFolder: ({ name, tenantId, color }) => {
+        const newFolder: ProjectFolder = {
+          id: generateGuid(),
+          tenantId,
+          name: name.trim(),
+          color: color || "amber",
+          createdAt: new Date().toISOString(),
+        }
+        set((state) => ({
+          folders: [...state.folders, newFolder],
+        }))
+        toast({
+          title: "Pasta Criada",
+          description: `A pasta "${newFolder.name}" foi criada com sucesso.`,
+          variant: "success",
+        })
+        return newFolder
+      },
+
+      renameFolder: (folderId, newName, color) => {
+        const trimmed = newName.trim()
+        if (!trimmed) return
+        set((state) => ({
+          folders: state.folders.map((f) =>
+            f.id === folderId
+              ? { ...f, name: trimmed, color: color ?? f.color }
+              : f
+          ),
+        }))
+        toast({
+          title: "Pasta Renomeada",
+          description: `A pasta foi atualizada para "${trimmed}".`,
+          variant: "success",
+        })
+      },
+
+      deleteFolder: (folderId) => {
+        const target = get().folders.find((f) => f.id === folderId)
+        set((state) => ({
+          folders: state.folders.filter((f) => f.id !== folderId),
+          projects: state.projects.map((p) =>
+            p.folderId === folderId ? { ...p, folderId: null } : p
+          ),
+        }))
+        toast({
+          title: "Pasta Removida",
+          description: target
+            ? `A pasta "${target.name}" foi excluída e seus projetos voltaram para a raiz.`
+            : "Pasta excluída. Os projetos vinculados voltaram para a raiz.",
+        })
+      },
+
+      moveProjectToFolder: (projectId, folderId) => {
+        const project = get().projects.find((p) => p.id === projectId)
+        const folder = folderId
+          ? get().folders.find((f) => f.id === folderId)
+          : null
+
+        set((state) => ({
+          projects: state.projects.map((p) =>
+            p.id === projectId ? { ...p, folderId: folderId || null } : p
+          ),
+        }))
+
+        if (project) {
+          toast({
+            title: "Projeto Movido",
+            description: folder
+              ? `"${project.title}" foi movido para a pasta "${folder.name}".`
+              : `"${project.title}" foi movido para a raiz (sem pasta).`,
+            variant: "success",
+          })
+        }
       },
 
       addProjectMember: (memberData) => {
@@ -344,8 +574,31 @@ export const useProjectsStore = create<ProjectsState>()(
       },
 
       ensureSeedData: () => {
-        const { projects, members } = get()
-        const existingProjectIds = new Set(projects.map((p) => p.id))
+        const { projects, members, folders } = get()
+        const legacyFolderIdMap: Record<string, string> = {
+          "fld-001": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+          "fld-002": "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e",
+          "fld-solo-001": "c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f",
+        }
+
+        let hasMigrated = false
+        const migratedFolders = (folders || []).map((f) => {
+          if (legacyFolderIdMap[f.id]) {
+            hasMigrated = true
+            return { ...f, id: legacyFolderIdMap[f.id] }
+          }
+          return f
+        })
+
+        const migratedProjects = projects.map((p) => {
+          if (p.folderId && legacyFolderIdMap[p.folderId]) {
+            hasMigrated = true
+            return { ...p, folderId: legacyFolderIdMap[p.folderId] }
+          }
+          return p
+        })
+
+        const existingProjectIds = new Set(migratedProjects.map((p) => p.id))
         const missingProjects = INITIAL_PROJECTS.filter(
           (p) => !existingProjectIds.has(p.id)
         )
@@ -353,11 +606,21 @@ export const useProjectsStore = create<ProjectsState>()(
         const missingMembers = INITIAL_PROJECT_MEMBERS.filter(
           (m) => !existingMemberIds.has(m.id)
         )
+        const existingFolderIds = new Set(migratedFolders.map((f) => f.id))
+        const missingFolders = INITIAL_FOLDERS.filter(
+          (f) => !existingFolderIds.has(f.id)
+        )
 
-        if (missingProjects.length > 0 || missingMembers.length > 0) {
+        if (
+          hasMigrated ||
+          missingProjects.length > 0 ||
+          missingMembers.length > 0 ||
+          missingFolders.length > 0
+        ) {
           set({
-            projects: [...projects, ...missingProjects],
+            projects: [...migratedProjects, ...missingProjects],
             members: [...members, ...missingMembers],
+            folders: [...migratedFolders, ...missingFolders],
           })
         }
       },
@@ -368,6 +631,7 @@ export const useProjectsStore = create<ProjectsState>()(
       partialize: (state) => ({
         projects: state.projects,
         members: state.members,
+        folders: state.folders,
       }),
     }
   )

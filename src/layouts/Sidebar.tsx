@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from "react-router-dom"
-import { HardHat, ChevronRight } from "lucide-react"
+import { HardHat, ChevronRight, Settings } from "lucide-react"
 
 import { useAuthStore } from "@/stores/authStore"
 import { getAuthorizedNavItems } from "@/config/navigation"
@@ -93,6 +93,41 @@ export function Sidebar({ onNavigate, className }: SidebarProps) {
           })}
         </nav>
       </div>
+
+      {/* Item Configurações: Posicionado na base do menu, logo acima do card de avatar/usuário (Exclusivo MANAGER/MASTER) */}
+      {(user?.role === "MANAGER" || user?.role === "MASTER") && (
+        <div className="px-4 py-2 border-t border-slate-800/80 bg-slate-900/40">
+          <NavLink
+            to="/configuracoes"
+            onClick={onNavigate}
+            className={({ isActive }) =>
+              cn(
+                "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium border border-transparent transition-colors duration-150 select-none",
+                isActive
+                  ? "bg-amber-500/10 text-amber-400 font-semibold border-amber-500/25"
+                  : "text-slate-400 hover:bg-slate-800/60 hover:text-slate-200"
+              )
+            }
+          >
+            {({ isActive }) => (
+              <>
+                <Settings
+                  className={cn(
+                    "h-5 w-5 shrink-0 transition-colors",
+                    isActive
+                      ? "text-amber-400"
+                      : "text-slate-400 group-hover:text-slate-300"
+                  )}
+                />
+                <span className="flex-1 truncate">Configurações</span>
+                {isActive && (
+                  <ChevronRight className="h-4 w-4 text-amber-400 shrink-0" />
+                )}
+              </>
+            )}
+          </NavLink>
+        </div>
+      )}
 
       {/* Rodapé da Sidebar: Perfil Limpo (Foto e Login, clicável para página do usuário) */}
       <div className="p-3 border-t border-slate-800/80 bg-slate-950/60">

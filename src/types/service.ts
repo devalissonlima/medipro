@@ -10,6 +10,7 @@ export type ServiceCategory =
 
 export interface ServiceItem {
   id: string
+  masterServiceId?: string
   name: string
   category: ServiceCategory
   unit: ServiceUnit
@@ -21,6 +22,7 @@ export interface ServiceItem {
 }
 
 export interface ServiceFormData {
+  masterServiceId?: string
   name: string
   category: ServiceCategory
   unit: ServiceUnit

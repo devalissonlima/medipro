@@ -9,6 +9,7 @@ import type {
   MeasurementServiceItem,
   OperationalCosts,
   Measurement,
+  AuditStatus,
 } from "@/types/measurement"
 import {
   calculateItemSubtotal,
@@ -193,6 +194,56 @@ export function useMeasurementForm(initialData?: Partial<Measurement>) {
     }
   }
 
+  // Escopo do Projeto Selecionado
+  const projectScopeItems = useMemo(() => {
+    return selectedProject?.scopeItems || []
+  }, [selectedProject])
+
+  // Quantidade já executada para cada item de escopo por outras medições da obra
+  const scopeItemExecutions = useMemo(() => {
+    if (!projectId) return new Map<string, number>()
+    const map = new Map<string, number>()
+
+    measurements
+      .filter(
+        (m) =>
+          m.projectId === projectId &&
+          m.id !== editId &&
+          m.status !== "rejected"
+      )
+      .forEach((m) => {
+        m.items?.forEach((serviceItem) => {
+          const match = projectScopeItems.find(
+            (s) =>
+              (serviceItem.masterServiceId &&
+                s.masterServiceId === serviceItem.masterServiceId) ||
+              s.serviceName.toLowerCase() ===
+                serviceItem.serviceName.toLowerCase()
+          )
+          if (match) {
+            const current = map.get(match.id) || 0
+            map.set(match.id, current + serviceItem.quantity)
+          }
+        })
+      })
+    return map
+  }, [measurements, projectId, editId, projectScopeItems])
+
+  const findScopeItem = (service: {
+    name?: string
+    serviceName?: string
+    id?: string
+    masterServiceId?: string
+  }) => {
+    const sName = service.name || service.serviceName || ""
+    const sId = service.masterServiceId || service.id
+    return projectScopeItems.find(
+      (s) =>
+        (sName && s.serviceName.toLowerCase() === sName.toLowerCase()) ||
+        (sId && s.masterServiceId === sId)
+    )
+  }
+
   // Cálculos reativos em tempo real
   const servicesTotal = useMemo(() => calculateServicesTotal(items), [items])
   const costsTotal = useMemo(
@@ -204,17 +255,76 @@ export function useMeasurementForm(initialData?: Partial<Measurement>) {
     [servicesTotal, costsTotal]
   )
 
-  const addItemFromService = (service: ServiceItem) => {
+  // Separação financeira: No Escopo vs. Em Auditoria (Excedente + Fora de Escopo)
+  const inScopeTotal = useMemo(() => {
+    return items.reduce((sum, item) => {
+      if (item.isOutOfScope) return sum
+      if (item.isExceeded && item.exceededQuantity) {
+        const withinQty = Math.max(0, item.quantity - item.exceededQuantity)
+        return sum + calculateItemSubtotal(withinQty, item.unitPrice)
+      }
+      return sum + item.subtotal
+    }, 0)
+  }, [items])
+
+  const auditPendingTotal = useMemo(() => {
+    return items.reduce((sum, item) => {
+      if (item.isOutOfScope) {
+        return sum + item.subtotal
+      }
+      if (item.isExceeded && item.exceededQuantity) {
+        return sum + calculateItemSubtotal(item.exceededQuantity, item.unitPrice)
+      }
+      return sum
+    }, 0)
+  }, [items])
+
+  const addItemFromService = (service: ServiceItem, forceOutOfScope = false) => {
     if (isApproved) return
+    const matchedScope = !forceOutOfScope ? findScopeItem(service) : undefined
+
+    let isExceeded = false
+    let exceededQuantity: number | undefined = undefined
+    let auditStatus: AuditStatus = "not_required"
+
+    if (forceOutOfScope || !matchedScope) {
+      if (forceOutOfScope || (projectScopeItems.length > 0 && !matchedScope)) {
+        auditStatus = "pending"
+      }
+    } else {
+      const otherQty = scopeItemExecutions.get(matchedScope.id) || 0
+      const existingInForm = items
+        .filter(
+          (i) =>
+            !i.isOutOfScope &&
+            (i.masterServiceId === matchedScope.masterServiceId ||
+              i.serviceName.toLowerCase() === matchedScope.serviceName.toLowerCase())
+        )
+        .reduce((sum, i) => sum + i.quantity, 0)
+
+      const totalWithNew = otherQty + existingInForm + 1
+      if (totalWithNew > matchedScope.maxQuantity) {
+        isExceeded = true
+        exceededQuantity = totalWithNew - matchedScope.maxQuantity
+        auditStatus = "pending"
+      }
+    }
+
     const newItem: MeasurementServiceItem = {
       id: `item-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 5)}`,
+      masterServiceId: matchedScope?.masterServiceId,
       serviceId: service.id,
       serviceName: service.name,
       materialName: "",
-      unit: service.unit,
+      unit: matchedScope ? matchedScope.unit : service.unit,
       quantity: 1,
       unitPrice: service.basePrice,
       subtotal: calculateItemSubtotal(1, service.basePrice),
+      isOutOfScope: forceOutOfScope,
+      isExceeded,
+      exceededQuantity,
+      exceededReason: isExceeded ? "client_additive" : undefined,
+      auditStatus: forceOutOfScope ? "pending" : auditStatus,
     }
 
     setItems((prev) => [...prev, newItem])
@@ -225,6 +335,10 @@ export function useMeasurementForm(initialData?: Partial<Measurement>) {
         return rest
       })
     }
+  }
+
+  const addOutOfScopeItem = (service: ServiceItem) => {
+    addItemFromService(service, true)
   }
 
   const updateItem = (
@@ -246,6 +360,37 @@ export function useMeasurementForm(initialData?: Partial<Measurement>) {
             typeof value === "number" ? value : parseFloat(String(value)) || 0
           updated.quantity = num
           updated.subtotal = calculateItemSubtotal(num, updated.unitPrice)
+
+          // Recalcula trava elástica se não for fora de escopo
+          if (!updated.isOutOfScope) {
+            const matchedScope = findScopeItem(updated)
+            if (matchedScope) {
+              const otherInProject = scopeItemExecutions.get(matchedScope.id) || 0
+              const otherInForm = items
+                .filter(
+                  (i) =>
+                    i.id !== itemId &&
+                    !i.isOutOfScope &&
+                    (i.masterServiceId === matchedScope.masterServiceId ||
+                      i.serviceName.toLowerCase() === matchedScope.serviceName.toLowerCase())
+                )
+                .reduce((sum, i) => sum + i.quantity, 0)
+
+              const totalCombined = otherInProject + otherInForm + num
+              if (totalCombined > matchedScope.maxQuantity) {
+                updated.isExceeded = true
+                updated.exceededQuantity = totalCombined - matchedScope.maxQuantity
+                updated.auditStatus = "pending"
+                if (!updated.exceededReason) {
+                  updated.exceededReason = "client_additive"
+                }
+              } else {
+                updated.isExceeded = false
+                updated.exceededQuantity = undefined
+                updated.auditStatus = "not_required"
+              }
+            }
+          }
         } else if (field === "unitPrice") {
           const num =
             typeof value === "number" ? value : parseFloat(String(value)) || 0
@@ -255,6 +400,17 @@ export function useMeasurementForm(initialData?: Partial<Measurement>) {
 
         return updated
       })
+    )
+  }
+
+  const updateItemAuditField = <K extends keyof MeasurementServiceItem>(
+    itemId: string,
+    field: K,
+    value: MeasurementServiceItem[K]
+  ) => {
+    if (isApproved) return
+    setItems((prev) =>
+      prev.map((i) => (i.id === itemId ? { ...i, [field]: value } : i))
     )
   }
 
@@ -295,6 +451,27 @@ export function useMeasurementForm(initialData?: Partial<Measurement>) {
       const hasInvalidItem = items.some((i) => i.quantity <= 0)
       if (hasInvalidItem) {
         newErrors.items = "Todos os itens devem ter quantidade maior que zero."
+      }
+
+      // Validação de itens com excesso (trava elástica)
+      const missingPhotoExceeded = items.find(
+        (i) => i.isExceeded && !i.evidencePhotoUrl
+      )
+      if (missingPhotoExceeded) {
+        newErrors.audit = `O item excedente "${missingPhotoExceeded.serviceName}" requer o envio de foto de evidência da obra para liberação.`
+      }
+
+      // Validação de itens fora de escopo (serviço extra)
+      const missingDetailsOutOfScope = items.find(
+        (i) =>
+          i.isOutOfScope && (!i.justificationNotes?.trim() || !i.evidencePhotoUrl)
+      )
+      if (missingDetailsOutOfScope) {
+        if (!missingDetailsOutOfScope.justificationNotes?.trim()) {
+          newErrors.audit = `O item fora de escopo "${missingDetailsOutOfScope.serviceName}" requer uma justificativa textual detalhada.`
+        } else if (!missingDetailsOutOfScope.evidencePhotoUrl) {
+          newErrors.audit = `O item fora de escopo "${missingDetailsOutOfScope.serviceName}" requer o envio de foto de evidência da obra.`
+        }
       }
     }
 
@@ -441,6 +618,10 @@ export function useMeasurementForm(initialData?: Partial<Measurement>) {
     handleSelectProject,
     availableProjects,
     requiresProjectSelection,
+    selectedProject,
+    projectScopeItems,
+    scopeItemExecutions,
+    findScopeItem,
     clientId,
     setClientId,
     clientName,
@@ -452,10 +633,14 @@ export function useMeasurementForm(initialData?: Partial<Measurement>) {
     errors,
     isSubmitting,
     servicesTotal,
+    inScopeTotal,
+    auditPendingTotal,
     costsTotal,
     grandTotal,
     addItemFromService,
+    addOutOfScopeItem,
     updateItem,
+    updateItemAuditField,
     removeItem,
     updateOperationalCost,
     handleSaveDraft,

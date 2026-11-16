@@ -1,10 +1,10 @@
 import React from "react"
 import { useParams, useNavigate, useLocation } from "react-router-dom"
-import { useSmartBack } from "@/hooks/useSmartBack"
 import {
   ArrowLeft,
   Building2,
-  BarChart3,
+  LayoutDashboard,
+  File,
   Users,
   Plus,
   MapPin,
@@ -16,18 +16,21 @@ import { Badge } from "@/components/ui/badge"
 import { Select } from "@/components/ui/select"
 import { RequestReworkModal } from "@/pages/dashboard/components/RequestReworkModal"
 import { PROJECT_STATUS_CONFIG, type ProjectStatus } from "@/types/project"
+import { getProjectUrl } from "@/utils/projectRoutes"
 import { useAuthStore } from "@/stores/authStore"
+import { useRecentAccessStore } from "@/stores/recentAccessStore"
 import { useProjectDetail } from "./hooks/useProjectDetail"
+import { ProjectDashboardTab } from "./components/ProjectDashboardTab"
 import { ProjectMeasurementsTab } from "./components/ProjectMeasurementsTab"
 import { ProjectTeamTab } from "./components/ProjectTeamTab"
 import { AddProjectMemberModal } from "./components/AddProjectMemberModal"
 
 export const ProjectDetailPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>()
+  const { id, folderId } = useParams<{ id: string; folderId?: string }>()
   const navigate = useNavigate()
-  const goBack = useSmartBack("/projetos")
   const location = useLocation()
   const user = useAuthStore((state) => state.user)
+  const trackProjectView = useRecentAccessStore((state) => state.trackProjectView)
 
   const {
     project,
@@ -57,17 +60,43 @@ export const ProjectDetailPage: React.FC = () => {
     updateProjectStatus,
   } = useProjectDetail(id || "")
 
+  // Detecção da aba ativa pela URL
   const isTeamRoute = location.pathname.endsWith("/equipe")
-  const currentTab = isTeamRoute ? "team" : "overview"
+  const isMeasurementsRoute = location.pathname.endsWith("/medicoes")
+  const currentTab: "dashboard" | "measurements" | "team" = isTeamRoute
+    ? "team"
+    : isMeasurementsRoute
+    ? "measurements"
+    : "dashboard"
 
   // Restringir criação de medição na obra exclusivamente a SOLO e MEMBER
   const canCreateMeasurement = user?.role === "SOLO" || user?.role === "MEMBER"
 
   React.useEffect(() => {
+    if (project && user?.id) {
+      trackProjectView(project.id, user.id)
+    }
+  }, [project?.id, user?.id, trackProjectView])
+
+  React.useEffect(() => {
     if (isTeamRoute && !canViewTeamTab && project) {
-      navigate(`/projetos/${project.id}/visao-geral`, { replace: true })
+      navigate(getProjectUrl(project, "dashboard"), { replace: true })
     }
   }, [isTeamRoute, canViewTeamTab, project, navigate])
+
+  // Mantém a rota canônica projetos > [idpasta] > [idprojeto] > [tab] quando o projeto pertence a uma pasta
+  React.useEffect(() => {
+    if (!project) return
+    const tabSlug =
+      currentTab === "team"
+        ? "equipe"
+        : currentTab === "measurements"
+        ? "medicoes"
+        : "dashboard"
+    if (project.folderId && folderId !== project.folderId) {
+      navigate(getProjectUrl(project, tabSlug), { replace: true })
+    }
+  }, [project, folderId, currentTab, navigate])
 
   if (!project) {
     return (
@@ -78,7 +107,7 @@ export const ProjectDetailPage: React.FC = () => {
         <p className="text-sm text-slate-500">
           O projeto solicitado não existe ou você não possui permissão para acessá-lo.
         </p>
-        <Button onClick={() => goBack("/projetos")} variant="outline">
+        <Button onClick={() => navigate("/projetos")} variant="outline">
           Voltar para Projetos
         </Button>
       </PageContainer>
@@ -86,6 +115,9 @@ export const ProjectDetailPage: React.FC = () => {
   }
 
   const statusInfo = PROJECT_STATUS_CONFIG[project.status]
+  const backTargetUrl = project.folderId
+    ? `/projetos/${project.folderId}`
+    : "/projetos"
 
   return (
     <PageContainer className="space-y-6 pb-20">
@@ -96,9 +128,13 @@ export const ProjectDetailPage: React.FC = () => {
             <Button
               variant="outline"
               size="icon"
-              onClick={() => goBack("/projetos")}
+              onClick={() => navigate(backTargetUrl)}
               className="h-9 w-9 shrink-0 border-slate-300 text-slate-600 hover:text-slate-900 mt-0.5"
-              title="Voltar para a página anterior"
+              title={
+                project.folderId
+                  ? "Voltar para a pasta do projeto"
+                  : "Voltar para Projetos"
+              }
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
@@ -119,7 +155,9 @@ export const ProjectDetailPage: React.FC = () => {
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-500 pt-0.5">
                 <div className="flex items-center gap-1.5">
                   <Building2 className="h-4 w-4 text-amber-600 shrink-0" />
-                  <span>Cliente: <strong className="text-slate-700">{resolvedClientName}</strong></span>
+                  <span>
+                    Cliente: <strong className="text-slate-700">{resolvedClientName}</strong>
+                  </span>
                 </div>
 
                 {project.address && (
@@ -168,48 +206,62 @@ export const ProjectDetailPage: React.FC = () => {
               <Button
                 size="sm"
                 onClick={() => navigate(`/medicoes/nova?projectId=${project.id}`)}
-                className="h-9 gap-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold"
+                className="h-9 gap-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-2xs"
               >
                 <Plus className="h-3.5 w-3.5 text-amber-400" />
-                Nova Medição na Obra
+                <span>Nova Medição na Obra</span>
               </Button>
             )}
           </div>
         </div>
 
-        {/* Submenu (Tabs com Deep-link) */}
-        <div className="flex items-center gap-2 border-t border-slate-100 pt-3">
+        {/* Submenu com 3 Abas: Dashboard, Medições e Equipe */}
+        <div className="flex items-center gap-1.5 sm:gap-2 border-t border-slate-100 pt-3 overflow-x-auto">
+          {/* Aba 1: Dashboard */}
           <button
             type="button"
-            onClick={() => navigate(`/projetos/${project.id}/visao-geral`)}
-            className={`flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs font-semibold transition-colors ${
-              currentTab === "overview"
-                ? "bg-amber-500/15 text-amber-800 border border-amber-500/30"
+            onClick={() => navigate(getProjectUrl(project, "dashboard"))}
+            className={`flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs font-semibold transition-colors shrink-0 ${
+              currentTab === "dashboard"
+                ? "bg-amber-500/15 text-amber-900 border border-amber-500/30"
                 : "text-slate-600 hover:bg-slate-100 border border-transparent"
             }`}
           >
-            <BarChart3 className="h-4 w-4" />
-            <span>
-              {isMember ? "Minhas Medições na Obra" : "Dashboard e Medições da Obra"}
-            </span>
-            <span className="rounded-full bg-white/80 px-1.5 py-0.2 text-[10px] font-bold text-slate-700 border border-slate-200">
+            <LayoutDashboard className="h-4 w-4" />
+            <span>Dashboard</span>
+          </button>
+
+          {/* Aba 2: Medições */}
+          <button
+            type="button"
+            onClick={() => navigate(getProjectUrl(project, "medicoes"))}
+            className={`flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs font-semibold transition-colors shrink-0 ${
+              currentTab === "measurements"
+                ? "bg-amber-500/15 text-amber-900 border border-amber-500/30"
+                : "text-slate-600 hover:bg-slate-100 border border-transparent"
+            }`}
+          >
+            <File className="h-4 w-4" />
+            <span>{isMember ? "Minhas Medições" : "Medições da Obra"}</span>
+            <span className="rounded-full bg-white/90 px-1.5 py-0.2 text-[10px] font-bold text-slate-700 border border-slate-200">
               {projectMeasurements.length}
             </span>
           </button>
 
+          {/* Aba 3: Equipe (oculta para membros e solo sem permissão) */}
           {canViewTeamTab && (
             <button
               type="button"
-              onClick={() => navigate(`/projetos/${project.id}/equipe`)}
-              className={`flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs font-semibold transition-colors ${
+              onClick={() => navigate(getProjectUrl(project, "equipe"))}
+              className={`flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs font-semibold transition-colors shrink-0 ${
                 currentTab === "team"
-                  ? "bg-amber-500/15 text-amber-800 border border-amber-500/30"
+                  ? "bg-amber-500/15 text-amber-900 border border-amber-500/30"
                   : "text-slate-600 hover:bg-slate-100 border border-transparent"
               }`}
             >
               <Users className="h-4 w-4" />
               <span>Equipe da Obra</span>
-              <span className="rounded-full bg-white/80 px-1.5 py-0.2 text-[10px] font-bold text-slate-700 border border-slate-200">
+              <span className="rounded-full bg-white/90 px-1.5 py-0.2 text-[10px] font-bold text-slate-700 border border-slate-200">
                 {activeMembersCount}/{project.maxMembers}
               </span>
             </button>
@@ -217,13 +269,31 @@ export const ProjectDetailPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Conteúdo das Tabs */}
-      {currentTab === "overview" && (
-        <ProjectMeasurementsTab
+      {/* Conteúdo das 3 Tabs */}
+      {currentTab === "dashboard" && (
+        <ProjectDashboardTab
+          project={project}
           measurements={projectMeasurements}
           metrics={metrics}
+          scopeItems={project.scopeItems}
+          isMember={isMember}
+          canViewTeam={canViewTeamTab}
+          activeMembersCount={activeMembersCount}
+          canCreateMeasurement={canCreateMeasurement}
+          onNavigateToMeasurements={() =>
+            navigate(getProjectUrl(project, "medicoes"))
+          }
+          onNavigateToTeam={() => navigate(getProjectUrl(project, "equipe"))}
+        />
+      )}
+
+      {currentTab === "measurements" && (
+        <ProjectMeasurementsTab
+          measurements={projectMeasurements}
           canApprove={canApproveMeasurements}
           isMember={isMember}
+          canCreateMeasurement={canCreateMeasurement}
+          projectId={project.id}
           onApprove={approveMeasurement}
           onRequestRework={reworkMeasurement}
           onReject={rejectMeasurement}

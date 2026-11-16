@@ -4,6 +4,8 @@ import { formatCurrency } from "@/utils/calculations"
 
 interface SummaryFooterProps {
   servicesTotal: number
+  inScopeTotal?: number
+  auditPendingTotal?: number
   costsTotal: number
   grandTotal: number
   isSubmitting: boolean
@@ -13,6 +15,8 @@ interface SummaryFooterProps {
 
 export function SummaryFooter({
   servicesTotal,
+  inScopeTotal,
+  auditPendingTotal = 0,
   costsTotal,
   grandTotal,
   isSubmitting,
@@ -23,7 +27,7 @@ export function SummaryFooter({
     <div className="sticky bottom-0 z-20 w-full border-t border-slate-200/90 bg-white/95 backdrop-blur-md px-4 py-3.5 sm:px-8 shadow-lg shadow-slate-900/10 transition-all">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
         {/* Totalizadores em tempo real */}
-        <div className="flex flex-wrap items-baseline gap-4 sm:gap-8">
+        <div className="flex flex-wrap items-baseline gap-4 sm:gap-6">
           {/* Subtotal Serviços */}
           <div className="space-y-0.5">
             <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
@@ -33,6 +37,27 @@ export function SummaryFooter({
               {formatCurrency(servicesTotal)}
             </span>
           </div>
+
+          {/* Destaque de Separação: No Escopo vs. Excedente em Auditoria */}
+          {auditPendingTotal > 0 && (
+            <div className="flex items-center gap-3 bg-amber-50/80 px-2.5 py-1 rounded-lg border border-amber-200 text-xs font-mono">
+              <div>
+                <span className="text-[10px] text-slate-500 block">No Escopo:</span>
+                <span className="font-bold text-slate-800">
+                  {formatCurrency(inScopeTotal ?? servicesTotal - auditPendingTotal)}
+                </span>
+              </div>
+              <span className="text-slate-300">|</span>
+              <div>
+                <span className="text-[10px] text-amber-700 font-semibold block">
+                  Em Auditoria:
+                </span>
+                <span className="font-bold text-amber-900">
+                  {formatCurrency(auditPendingTotal)}
+                </span>
+              </div>
+            </div>
+          )}
 
           <span className="text-slate-300 hidden sm:inline">+</span>
 

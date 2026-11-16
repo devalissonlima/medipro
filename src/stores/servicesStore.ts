@@ -10,6 +10,7 @@ import { toast } from "@/components/ui/use-toast"
 const INITIAL_SERVICES: ServiceItem[] = [
   {
     id: "srv-001",
+    masterServiceId: "mst-001",
     name: "Assentamento de Mármore Travertino",
     category: "Assentamento",
     unit: "m2",
@@ -22,6 +23,7 @@ const INITIAL_SERVICES: ServiceItem[] = [
   },
   {
     id: "srv-002",
+    masterServiceId: "mst-002",
     name: "Corte em Meia Esquadria 45°",
     category: "Corte",
     unit: "m_linear",
@@ -34,6 +36,7 @@ const INITIAL_SERVICES: ServiceItem[] = [
   },
   {
     id: "srv-003",
+    masterServiceId: "mst-003",
     name: "Furação e Recorte de Cuba Esculpida",
     category: "Furação",
     unit: "un",
@@ -46,6 +49,7 @@ const INITIAL_SERVICES: ServiceItem[] = [
   },
   {
     id: "srv-004",
+    masterServiceId: "mst-004",
     name: "Polimento e Cristalização de Rochas",
     category: "Acabamento",
     unit: "m2",
@@ -58,6 +62,7 @@ const INITIAL_SERVICES: ServiceItem[] = [
   },
   {
     id: "srv-005",
+    masterServiceId: "mst-005",
     name: "Instalação de Ilha Gourmet & Bancada",
     category: "Instalação",
     unit: "un",
@@ -70,6 +75,7 @@ const INITIAL_SERVICES: ServiceItem[] = [
   },
   {
     id: "srv-006",
+    masterServiceId: "mst-006",
     name: "Revestimento Porcelanato Grandes Formatos",
     category: "Assentamento",
     unit: "m2",
@@ -103,6 +109,9 @@ interface ServicesState {
   ) => void
   addService: (
     data: Omit<ServiceItem, "id" | "createdAt" | "updatedAt">
+  ) => void
+  importServices: (
+    items: Array<Omit<ServiceItem, "id" | "createdAt" | "updatedAt">>
   ) => void
   updateService: (
     id: string,
@@ -167,6 +176,37 @@ export const useServicesStore = create<ServicesState>()(
             services: [newService, ...state.services],
             isFormOpen: false,
             editingService: null,
+            notification: {
+              message: msg,
+              type: "success",
+            },
+          }
+        }),
+
+      importServices: (newItems) =>
+        set((state) => {
+          if (newItems.length === 0) return state
+          const now = new Date().toISOString()
+          const imported: ServiceItem[] = newItems.map((item, idx) => ({
+            ...item,
+            id: `srv-imp-${Date.now().toString(36)}-${idx}`,
+            createdAt: now,
+            updatedAt: now,
+          }))
+
+          const count = imported.length
+          const msg = `${count} ${
+            count === 1 ? "serviço importado e adicionado" : "serviços importados e adicionados"
+          } ao seu catálogo!`
+
+          toast({
+            title: "Serviços Importados",
+            description: msg,
+            variant: "success",
+          })
+
+          return {
+            services: [...imported, ...state.services],
             notification: {
               message: msg,
               type: "success",

@@ -2,25 +2,39 @@ import { Trash2, Sparkles } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { ElasticGuardAlert } from "./ElasticGuardAlert"
 import type { MeasurementServiceItem } from "@/types/measurement"
+import type { ProjectScopeItem } from "@/types/project"
 import { formatCurrency } from "@/utils/calculations"
 
 interface ServiceItemRowProps {
   index: number
   item: MeasurementServiceItem
+  scopeItem?: ProjectScopeItem
+  otherExecutedInProject?: number
   onUpdate: (
     itemId: string,
     field: "materialName" | "quantity" | "unitPrice",
     value: string | number
   ) => void
+  onUpdateAuditField?: <K extends keyof MeasurementServiceItem>(
+    itemId: string,
+    field: K,
+    value: MeasurementServiceItem[K]
+  ) => void
   onRemove: (itemId: string) => void
+  isReadOnly?: boolean
 }
 
 export function ServiceItemRow({
   index,
   item,
+  scopeItem,
+  otherExecutedInProject = 0,
   onUpdate,
+  onUpdateAuditField,
   onRemove,
+  isReadOnly = false,
 }: ServiceItemRowProps) {
   return (
     <div className="rounded-xl border border-slate-200/90 bg-white p-4 sm:p-5 shadow-xs space-y-3.5 relative group hover:border-slate-300 transition-colors">
@@ -39,18 +53,25 @@ export function ServiceItemRow({
           >
             {item.unit}
           </Badge>
+          {scopeItem && (
+            <Badge className="bg-blue-50 text-blue-700 border-blue-200 text-[10px] font-semibold">
+              Item de Escopo
+            </Badge>
+          )}
         </div>
 
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={() => onRemove(item.id)}
-          className="h-7 w-7 p-0 text-slate-400 hover:text-rose-600 hover:bg-rose-50"
-          title="Remover serviço"
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
+        {!isReadOnly && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => onRemove(item.id)}
+            className="h-7 w-7 p-0 text-slate-400 hover:text-rose-600 hover:bg-rose-50"
+            title="Remover serviço"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        )}
       </div>
 
       {/* Grid de Inputs: Material + Quantidade + Valor Unitário + Subtotal */}
@@ -67,6 +88,7 @@ export function ServiceItemRow({
           <Input
             placeholder="Ex: Mármore Branco Paraná, Granito..."
             value={item.materialName || ""}
+            disabled={isReadOnly}
             onChange={(e) => onUpdate(item.id, "materialName", e.target.value)}
             className="h-9 text-xs bg-slate-50/50 focus:bg-white"
           />
@@ -81,6 +103,7 @@ export function ServiceItemRow({
             type="number"
             step="0.01"
             min="0.01"
+            disabled={isReadOnly}
             value={item.quantity === 0 ? "" : item.quantity}
             onChange={(e) => onUpdate(item.id, "quantity", e.target.value)}
             className="h-9 text-xs font-mono font-medium text-slate-900"
@@ -96,6 +119,7 @@ export function ServiceItemRow({
             type="number"
             step="0.01"
             min="0"
+            disabled={isReadOnly}
             value={item.unitPrice === 0 ? "" : item.unitPrice}
             onChange={(e) => onUpdate(item.id, "unitPrice", e.target.value)}
             className="h-9 text-xs font-mono font-medium text-slate-900"
@@ -112,6 +136,20 @@ export function ServiceItemRow({
           </div>
         </div>
       </div>
+
+      {/* Trava Elástica & Auditoria de Excedente */}
+      {scopeItem && (
+        <ElasticGuardAlert
+          item={item}
+          scopeItem={scopeItem}
+          otherExecutedInProject={otherExecutedInProject}
+          onUpdateAuditField={(field, val) =>
+            onUpdateAuditField?.(item.id, field, val)
+          }
+          isReadOnly={isReadOnly}
+        />
+      )}
     </div>
   )
 }
+

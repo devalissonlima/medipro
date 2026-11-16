@@ -30,6 +30,9 @@ export const INITIAL_MEASUREMENTS: Measurement[] = [
         quantity: 8.5,
         unitPrice: 155.0,
         subtotal: 1317.5,
+        isOutOfScope: false,
+        isExceeded: false,
+        auditStatus: "not_required",
       },
       {
         id: "item-102",
@@ -40,6 +43,9 @@ export const INITIAL_MEASUREMENTS: Measurement[] = [
         quantity: 11.2,
         unitPrice: 85.0,
         subtotal: 952.0,
+        isOutOfScope: false,
+        isExceeded: false,
+        auditStatus: "not_required",
       },
       {
         id: "item-103",
@@ -50,6 +56,9 @@ export const INITIAL_MEASUREMENTS: Measurement[] = [
         quantity: 2,
         unitPrice: 130.0,
         subtotal: 260.0,
+        isOutOfScope: false,
+        isExceeded: false,
+        auditStatus: "not_required",
       },
     ],
     operationalCosts: {
@@ -89,6 +98,9 @@ export const INITIAL_MEASUREMENTS: Measurement[] = [
         quantity: 16.4,
         unitPrice: 130.0,
         subtotal: 2132.0,
+        isOutOfScope: false,
+        isExceeded: false,
+        auditStatus: "not_required",
       },
       {
         id: "item-202",
@@ -99,15 +111,37 @@ export const INITIAL_MEASUREMENTS: Measurement[] = [
         quantity: 8.6,
         unitPrice: 95.0,
         subtotal: 817.0,
+        isOutOfScope: false,
+        isExceeded: true,
+        exceededQuantity: 2.6,
+        exceededReason: "client_additive",
+        justificationNotes: "Cliente solicitou borda sobreposta com rodamão duplo no nicho do chuveiro.",
+        evidencePhotoUrl: "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=600&auto=format&fit=crop&q=80",
+        auditStatus: "pending",
+      },
+      {
+        id: "item-203",
+        serviceId: "srv-007",
+        serviceName: "Assentamento de Rodapé",
+        materialName: "Rodapé 15cm Porcelanato",
+        unit: "m linear",
+        quantity: 6.0,
+        unitPrice: 45.0,
+        subtotal: 270.0,
+        isOutOfScope: true,
+        isExceeded: false,
+        justificationNotes: "Serviço avulso não orçado inicialmente no escopo da suíte master.",
+        evidencePhotoUrl: "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=600&auto=format&fit=crop&q=80",
+        auditStatus: "pending",
       },
     ],
     operationalCosts: {
       extraSetup: 180.0,
       notes: "Içamento manual de lastras até o piso superior pela escada.",
     },
-    servicesTotal: 2949.0,
+    servicesTotal: 3219.0,
     costsTotal: 180.0,
-    grandTotal: 3129.0,
+    grandTotal: 3399.0,
     status: "pending",
     shareableUrlToken: "med-nov26-suitemaster",
     createdAt: "2026-11-11T11:20:00Z",
@@ -137,6 +171,9 @@ export const INITIAL_MEASUREMENTS: Measurement[] = [
         quantity: 24.0,
         unitPrice: 65.0,
         subtotal: 1560.0,
+        isOutOfScope: false,
+        isExceeded: false,
+        auditStatus: "not_required",
       },
       {
         id: "item-302",
@@ -147,6 +184,9 @@ export const INITIAL_MEASUREMENTS: Measurement[] = [
         quantity: 1,
         unitPrice: 380.0,
         subtotal: 380.0,
+        isOutOfScope: false,
+        isExceeded: false,
+        auditStatus: "not_required",
       },
     ],
     operationalCosts: {
@@ -188,6 +228,9 @@ export const INITIAL_MEASUREMENTS: Measurement[] = [
         quantity: 4.8,
         unitPrice: 85.0,
         subtotal: 408.0,
+        isOutOfScope: false,
+        isExceeded: false,
+        auditStatus: "not_required",
       },
       {
         id: "item-402",
@@ -198,6 +241,9 @@ export const INITIAL_MEASUREMENTS: Measurement[] = [
         quantity: 1,
         unitPrice: 120.0,
         subtotal: 120.0,
+        isOutOfScope: false,
+        isExceeded: false,
+        auditStatus: "not_required",
       },
     ],
     operationalCosts: {
@@ -235,6 +281,9 @@ export const INITIAL_MEASUREMENTS: Measurement[] = [
         quantity: 18.2,
         unitPrice: 145.0,
         subtotal: 2639.0,
+        isOutOfScope: false,
+        isExceeded: false,
+        auditStatus: "not_required",
       },
       {
         id: "item-502",
@@ -245,6 +294,9 @@ export const INITIAL_MEASUREMENTS: Measurement[] = [
         quantity: 14.0,
         unitPrice: 85.0,
         subtotal: 1190.0,
+        isOutOfScope: false,
+        isExceeded: false,
+        auditStatus: "not_required",
       },
     ],
     operationalCosts: {
@@ -282,6 +334,9 @@ export const INITIAL_MEASUREMENTS: Measurement[] = [
         quantity: 2,
         unitPrice: 450.0,
         subtotal: 900.0,
+        isOutOfScope: false,
+        isExceeded: false,
+        auditStatus: "not_required",
       },
     ],
     operationalCosts: {
@@ -314,6 +369,11 @@ interface MeasurementsState {
   deleteMeasurement: (id: string) => void
   duplicateMeasurement: (id: string) => Measurement | null
   updateStatus: (id: string, status: MeasurementStatus, reworkNote?: string) => void
+  updateItemAuditStatus: (
+    measurementId: string,
+    itemId: string,
+    auditStatus: "approved" | "rejected"
+  ) => void
   bulkApprove: (ids: string[]) => void
   openDetailModal: (measurement: Measurement) => void
   closeDetailModal: () => void
@@ -457,6 +517,27 @@ export const useMeasurementsStore = create<MeasurementsState>()(
             type: status === "approved" || status === "pending" ? "success" : "info",
           },
         }))
+      },
+
+      updateItemAuditStatus: (measurementId, itemId, auditStatus) => {
+        set((state) => ({
+          measurements: state.measurements.map((m) => {
+            if (m.id !== measurementId) return m
+            return {
+              ...m,
+              items: m.items.map((item) =>
+                item.id === itemId ? { ...item, auditStatus } : item
+              ),
+              updatedAt: new Date().toISOString(),
+            }
+          }),
+        }))
+
+        toast({
+          title: auditStatus === "approved" ? "Item Aprovado" : "Item Rejeitado",
+          description: `O item foi marcado como ${auditStatus === "approved" ? "Aprovado para pagamento" : "Rejeitado na auditoria"}.`,
+          variant: auditStatus === "approved" ? "success" : "destructive",
+        })
       },
 
       bulkApprove: (ids: string[]) => {

@@ -5,6 +5,7 @@ import {
 } from "lucide-react"
 import { PageContainer } from "@/components/shared/PageContainer"
 import { PageHeader } from "@/components/shared/PageHeader"
+import { GroupedMeasurementsList } from "@/components/shared/GroupedMeasurementsList"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { DashboardMetrics } from "./components/DashboardMetrics"
@@ -127,22 +128,22 @@ export function DashboardPage() {
           </span>
         </div>
 
-        {/* Lista de Linhas Compactas Expansíveis */}
+        {/* Lista de Linhas Compactas Expansíveis Agrupadas por Período */}
         {filteredMeasurements.length === 0 ? (
           <DashboardEmptyState onClearFilters={clearFilters} />
         ) : (
-          <div className="space-y-2.5">
-            {filteredMeasurements.map((measurement) => (
+          <GroupedMeasurementsList
+            measurements={filteredMeasurements}
+            renderItem={(measurement) => (
               <MeasurementReviewRow
-                key={measurement.id}
                 measurement={measurement}
                 isSelected={selectedIds.includes(measurement.id)}
                 onToggleSelect={toggleSelect}
                 onApprove={approveSingle}
                 onRequestRework={openReworkModal}
               />
-            ))}
-          </div>
+            )}
+          />
         )}
       </div>
 
