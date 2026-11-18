@@ -83,9 +83,11 @@ export function ClientFormModal() {
               {(Object.keys(CLIENT_TYPE_CONFIG) as ClientType[]).map((t) => {
                 const isSelected = type === t
                 return (
-                  <button
+                  <Button
                     key={t}
                     type="button"
+                    variant="unstyled"
+                    size="auto"
                     onClick={() => setType(t)}
                     className={`py-2 px-2 text-xs font-semibold rounded-lg border text-center transition-all ${
                       isSelected
@@ -94,7 +96,7 @@ export function ClientFormModal() {
                     }`}
                   >
                     {CLIENT_TYPE_CONFIG[t].label}
-                  </button>
+                  </Button>
                 )
               })}
             </div>

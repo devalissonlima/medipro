@@ -2,12 +2,14 @@ import { useLocation, Link } from "react-router-dom"
 import { ChevronRight, Home } from "lucide-react"
 import { useProjectsStore } from "@/stores/projectsStore"
 import { useMeasurementsStore } from "@/stores/measurementsStore"
+import { useBudgetsStore } from "@/stores/budgetsStore"
 
 export function AppBreadcrumb() {
   const location = useLocation()
   const pathname = location.pathname
   const { projects, folders } = useProjectsStore()
   const { measurements } = useMeasurementsStore()
+  const { budgets } = useBudgetsStore()
 
   // O item "Início" existe apenas na página de início ("/")
   if (pathname === "/") {
@@ -36,8 +38,31 @@ export function AppBreadcrumb() {
     items.push({ label: "Meu Plano", isCurrent: true })
   } else if (first === "configuracoes") {
     items.push({ label: "Configurações", isCurrent: true })
-  } else if (first === "perfil" || first === "usuario") {
+  } else if (first === "perfil" || first === "usuario" || first === "minha-conta") {
     items.push({ label: "Minha Conta", isCurrent: true })
+  } else if (first === "orcamentos") {
+    items.push({
+      label: "Orçamentos",
+      href: segments.length > 1 ? "/orcamentos" : undefined,
+      isCurrent: segments.length === 1,
+    })
+
+    if (segments[1] === "novo") {
+      items.push({ label: "Novo Orçamento", isCurrent: true })
+    } else if (segments[1] && segments[2] === "editar") {
+      const budget = budgets.find((b) => b.id === segments[1])
+      items.push({
+        label: budget ? budget.code : "Orçamento",
+        href: `/orcamentos/${segments[1]}`,
+      })
+      items.push({ label: "Editar", isCurrent: true })
+    } else if (segments[1]) {
+      const budget = budgets.find((b) => b.id === segments[1])
+      items.push({
+        label: budget ? `${budget.code} — ${budget.title}` : "Proposta",
+        isCurrent: true,
+      })
+    }
   } else if (first === "medicoes") {
     items.push({
       label: "Medições",

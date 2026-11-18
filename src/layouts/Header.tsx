@@ -8,7 +8,7 @@ interface HeaderProps {
 
 export function Header({ onToggleMobileMenu }: HeaderProps) {
   return (
-    <header className="sticky top-0 z-20 flex h-14 w-full items-center justify-between border-b border-slate-200/90 bg-white/95 px-4 backdrop-blur-md sm:px-6">
+    <header className="sticky top-0 z-20 flex h-14 w-full items-center justify-between border-b border-slate-200/90 bg-white/95 px-4 backdrop-blur-md sm:px-6 print:hidden">
       <div className="flex items-center gap-3 min-w-0 flex-1">
         <Button
           variant="ghost"

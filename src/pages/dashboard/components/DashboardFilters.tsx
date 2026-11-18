@@ -97,13 +97,16 @@ export function DashboardFilters({
             className="pl-9 pr-8 h-9 text-xs bg-slate-50/50 focus:bg-white"
           />
           {searchQuery && (
-            <button
+            <Button
+              type="button"
+              variant="unstyled"
+              size="auto"
               onClick={() => onSearchChange("")}
               className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600"
               aria-label="Limpar busca"
             >
               <X className="h-4 w-4" />
-            </button>
+            </Button>
           )}
         </div>
 
@@ -112,9 +115,11 @@ export function DashboardFilters({
           {periodOptions.map((opt) => {
             const isSelected = period === opt.value
             return (
-              <button
+              <Button
                 key={opt.value}
                 type="button"
+                variant="unstyled"
+                size="auto"
                 onClick={() => onPeriodChange(opt.value)}
                 className={`flex-1 text-[11px] font-semibold py-1 px-1.5 rounded-md transition-colors text-center whitespace-nowrap ${
                   isSelected
@@ -123,7 +128,7 @@ export function DashboardFilters({
                 }`}
               >
                 {opt.label}
-              </button>
+              </Button>
             )
           })}
         </div>
@@ -152,9 +157,11 @@ export function DashboardFilters({
             const isSelected = statusFilter === opt.value
             const count = statusCounts[opt.value] || 0
             return (
-              <button
+              <Button
                 key={opt.value}
                 type="button"
+                variant="unstyled"
+                size="auto"
                 onClick={() => onStatusChange(opt.value)}
                 className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
                   isSelected
@@ -172,7 +179,7 @@ export function DashboardFilters({
                 >
                   {count}
                 </span>
-              </button>
+              </Button>
             )
           })}
         </div>

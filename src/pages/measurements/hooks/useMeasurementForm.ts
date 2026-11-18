@@ -4,7 +4,11 @@ import { useMeasurementsStore } from "@/stores/measurementsStore"
 import { useClientsStore } from "@/stores/clientsStore"
 import { useProjectsStore } from "@/stores/projectsStore"
 import { useAuthStore } from "@/stores/authStore"
-import type { ServiceItem } from "@/types/service"
+import {
+  normalizeMeasurementUnit,
+  type CatalogItemType,
+  type ServiceItem,
+} from "@/types/service"
 import type {
   MeasurementServiceItem,
   OperationalCosts,
@@ -255,6 +259,20 @@ export function useMeasurementForm(initialData?: Partial<Measurement>) {
     [servicesTotal, costsTotal]
   )
 
+  // Quebra de totais por natureza da composição (Mão de Obra / Materiais / Terceiros)
+  const typeBreakdown = useMemo(() => {
+    return items.reduce(
+      (acc, item) => {
+        const t = item.itemType || "labor"
+        if (t === "material") acc.material += item.subtotal
+        else if (t === "subcontract") acc.subcontract += item.subtotal
+        else acc.labor += item.subtotal
+        return acc
+      },
+      { labor: 0, material: 0, subcontract: 0 }
+    )
+  }, [items])
+
   // Separação financeira: No Escopo vs. Em Auditoria (Excedente + Fora de Escopo)
   const inScopeTotal = useMemo(() => {
     return items.reduce((sum, item) => {
@@ -314,9 +332,10 @@ export function useMeasurementForm(initialData?: Partial<Measurement>) {
       id: `item-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 5)}`,
       masterServiceId: matchedScope?.masterServiceId,
       serviceId: service.id,
+      itemType: service.itemType || "labor",
       serviceName: service.name,
       materialName: "",
-      unit: matchedScope ? matchedScope.unit : service.unit,
+      unit: normalizeMeasurementUnit(matchedScope ? matchedScope.unit : service.unit),
       quantity: 1,
       unitPrice: service.basePrice,
       subtotal: calculateItemSubtotal(1, service.basePrice),
@@ -341,9 +360,48 @@ export function useMeasurementForm(initialData?: Partial<Measurement>) {
     addItemFromService(service, true)
   }
 
+  const addManualItem = (itemType: CatalogItemType = "labor") => {
+    if (isApproved) return
+    const isOutOfScopeContext = projectScopeItems.length > 0
+    const newItem: MeasurementServiceItem = {
+      id: `item-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 5)}`,
+      serviceId: `manual-${Date.now().toString(36)}`,
+      itemType,
+      serviceName: "",
+      materialName: "",
+      unit:
+        itemType === "subcontract"
+          ? "diária"
+          : itemType === "material"
+          ? "unidade"
+          : "m²",
+      quantity: 1,
+      unitPrice: 0,
+      subtotal: 0,
+      isOutOfScope: isOutOfScopeContext,
+      isExceeded: false,
+      auditStatus: isOutOfScopeContext ? "pending" : "not_required",
+    }
+
+    setItems((prev) => [...prev, newItem])
+    if (errors.items) {
+      setErrors((prev) => {
+        const rest = { ...prev }
+        delete rest.items
+        return rest
+      })
+    }
+  }
+
   const updateItem = (
     itemId: string,
-    field: "materialName" | "quantity" | "unitPrice",
+    field:
+      | "serviceName"
+      | "materialName"
+      | "unit"
+      | "itemType"
+      | "quantity"
+      | "unitPrice",
     value: string | number
   ) => {
     if (isApproved) return
@@ -353,8 +411,14 @@ export function useMeasurementForm(initialData?: Partial<Measurement>) {
 
         const updated = { ...item }
 
-        if (field === "materialName") {
+        if (field === "serviceName") {
+          updated.serviceName = String(value)
+        } else if (field === "materialName") {
           updated.materialName = String(value)
+        } else if (field === "unit") {
+          updated.unit = String(value)
+        } else if (field === "itemType") {
+          updated.itemType = value as CatalogItemType
         } else if (field === "quantity") {
           const num =
             typeof value === "number" ? value : parseFloat(String(value)) || 0
@@ -448,9 +512,12 @@ export function useMeasurementForm(initialData?: Partial<Measurement>) {
     if (items.length === 0) {
       newErrors.items = "Adicione ao menos um serviço na medição."
     } else {
-      const hasInvalidItem = items.some((i) => i.quantity <= 0)
+      const hasInvalidItem = items.some(
+        (i) => !i.serviceName?.trim() || i.quantity <= 0
+      )
       if (hasInvalidItem) {
-        newErrors.items = "Todos os itens devem ter quantidade maior que zero."
+        newErrors.items =
+          "Todos os itens devem possuir nome e quantidade maior que zero."
       }
 
       // Validação de itens com excesso (trava elástica)
@@ -498,6 +565,9 @@ export function useMeasurementForm(initialData?: Partial<Measurement>) {
       collaboratorName: existingMeasurement?.collaboratorName || user?.name,
       collaboratorAvatar: existingMeasurement?.collaboratorAvatar || user?.avatarUrl,
       leaderId: isTeamContext ? user?.id : undefined,
+      signatureUrl: user?.signatureUrl || existingMeasurement?.signatureUrl,
+      signatureName:
+        user?.signatureName || existingMeasurement?.signatureName || user?.name,
       items,
       operationalCosts,
       servicesTotal,
@@ -633,12 +703,16 @@ export function useMeasurementForm(initialData?: Partial<Measurement>) {
     errors,
     isSubmitting,
     servicesTotal,
+    laborTotal: typeBreakdown.labor,
+    materialTotal: typeBreakdown.material,
+    subcontractTotal: typeBreakdown.subcontract,
     inScopeTotal,
     auditPendingTotal,
     costsTotal,
     grandTotal,
     addItemFromService,
     addOutOfScopeItem,
+    addManualItem,
     updateItem,
     updateItemAuditField,
     removeItem,

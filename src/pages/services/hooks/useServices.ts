@@ -1,18 +1,20 @@
 import { useMemo } from "react"
 import { useServicesStore } from "@/stores/servicesStore"
-import type { ServiceCategory } from "@/types/service"
+import type { CatalogItemType, ServiceCategory } from "@/types/service"
 
 export function useServices() {
   const {
     services,
     searchTerm,
     selectedCategory,
+    selectedItemType,
     viewMode,
     isFormOpen,
     editingService,
     notification,
     setSearchTerm,
     setSelectedCategory,
+    setSelectedItemType,
     setViewMode,
     openCreateModal,
     openEditModal,
@@ -21,9 +23,13 @@ export function useServices() {
     setNotification,
   } = useServicesStore()
 
-  // Lista filtrada por busca textual e categoria
+  // Lista filtrada por natureza, busca textual e categoria
   const filteredServices = useMemo(() => {
     return services.filter((service) => {
+      const matchesType =
+        selectedItemType === "all" ||
+        (service.itemType || "labor") === selectedItemType
+
       const matchesSearch =
         searchTerm.trim() === "" ||
         service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -38,9 +44,24 @@ export function useServices() {
       const matchesCategory =
         selectedCategory === "Todas" || service.category === selectedCategory
 
-      return matchesSearch && matchesCategory
+      return matchesType && matchesSearch && matchesCategory
     })
-  }, [services, searchTerm, selectedCategory])
+  }, [services, searchTerm, selectedCategory, selectedItemType])
+
+  // Contagem por natureza
+  const itemTypeCounts = useMemo(() => {
+    const counts: Record<CatalogItemType | "all", number> = {
+      all: services.length,
+      labor: 0,
+      material: 0,
+      subcontract: 0,
+    }
+    services.forEach((s) => {
+      const type = s.itemType || "labor"
+      counts[type] = (counts[type] || 0) + 1
+    })
+    return counts
+  }, [services])
 
   // Contagem por categoria
   const categoryCounts = useMemo(() => {
@@ -58,6 +79,7 @@ export function useServices() {
   const clearFilters = () => {
     setSearchTerm("")
     setSelectedCategory("Todas")
+    setSelectedItemType("all")
   }
 
   return {
@@ -65,8 +87,10 @@ export function useServices() {
     totalCount: services.length,
     filteredCount: filteredServices.length,
     categoryCounts,
+    itemTypeCounts,
     searchTerm,
     selectedCategory,
+    selectedItemType,
     viewMode,
     isFormOpen,
     editingService,
@@ -74,6 +98,7 @@ export function useServices() {
     setSearchTerm,
     setSelectedCategory: (cat: ServiceCategory | "Todas") =>
       setSelectedCategory(cat),
+    setSelectedItemType,
     setViewMode,
     openCreateModal,
     openEditModal,

@@ -13,6 +13,7 @@ import {
   type LucideIcon,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { useAuthStore } from "@/stores/authStore"
 
 interface QuickShortcutsProps {
@@ -227,9 +228,11 @@ export const QuickShortcuts: React.FC<QuickShortcutsProps> = ({
         {shortcuts.map((shortcut) => {
           const Icon = shortcut.icon
           return (
-            <button
+            <Button
               key={shortcut.id}
               type="button"
+              variant="unstyled"
+              size="auto"
               onClick={() => navigate(shortcut.route)}
               className={`group relative flex flex-col justify-between overflow-hidden rounded-xl border p-4 text-left transition-all hover:scale-[1.01] hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
                 shortcut.isPrimary
@@ -272,7 +275,7 @@ export const QuickShortcuts: React.FC<QuickShortcutsProps> = ({
                 <span>Acessar</span>
                 <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-1" />
               </div>
-            </button>
+            </Button>
           )
         })}
       </div>

@@ -27,11 +27,14 @@ export function ServicesPage() {
     totalCount,
     filteredCount,
     categoryCounts,
+    itemTypeCounts,
     searchTerm,
     selectedCategory,
+    selectedItemType,
     viewMode,
     setSearchTerm,
     setSelectedCategory,
+    setSelectedItemType,
     setViewMode,
     openCreateModal,
     openEditModal,
@@ -104,8 +107,10 @@ export function ServicesPage() {
       {/* Navegação em Sub-abas (Exclusiva para MEMBER) */}
       {isMember && (
         <div className="flex items-center gap-2 border-b border-slate-200 pb-3">
-          <button
+          <Button
             type="button"
+            variant="unstyled"
+            size="auto"
             onClick={() => setActiveTab("my-services")}
             className={`flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs font-semibold transition-colors ${
               activeTab === "my-services"
@@ -124,10 +129,12 @@ export function ServicesPage() {
             >
               {totalCount}
             </span>
-          </button>
+          </Button>
 
-          <button
+          <Button
             type="button"
+            variant="unstyled"
+            size="auto"
             onClick={() => setActiveTab("company-services")}
             className={`flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs font-semibold transition-colors ${
               activeTab === "company-services"
@@ -152,7 +159,7 @@ export function ServicesPage() {
                 {masterServices.length}
               </span>
             )}
-          </button>
+          </Button>
         </div>
       )}
 
@@ -196,12 +203,15 @@ export function ServicesPage() {
           <ServiceFilters
             searchTerm={searchTerm}
             selectedCategory={selectedCategory}
+            selectedItemType={selectedItemType}
             viewMode={viewMode}
             categoryCounts={categoryCounts}
+            itemTypeCounts={itemTypeCounts}
             totalCount={totalCount}
             filteredCount={filteredCount}
             onSearchChange={setSearchTerm}
             onCategoryChange={setSelectedCategory}
+            onItemTypeChange={setSelectedItemType}
             onViewModeChange={setViewMode}
             onClearFilters={clearFilters}
           />
@@ -209,7 +219,11 @@ export function ServicesPage() {
           {/* Conteúdo Principal (Cards ou Tabela) */}
           {services.length === 0 ? (
             <ServicesEmptyState
-              isFiltered={searchTerm !== "" || selectedCategory !== "Todas"}
+              isFiltered={
+                searchTerm !== "" ||
+                selectedCategory !== "Todas" ||
+                selectedItemType !== "all"
+              }
               onResetFilters={clearFilters}
               onOpenCreate={openCreateModal}
             />

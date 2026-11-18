@@ -54,7 +54,7 @@ export const useRecentAccessStore = create<RecentAccessState>()(
       },
     }),
     {
-      name: "@medipro:recent-access-v1",
+      name: "@medipro:recent-access-v2",
       storage: createJSONStorage(() => localStorage),
     }
   )

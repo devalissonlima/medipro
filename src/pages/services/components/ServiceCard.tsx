@@ -12,7 +12,7 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import type { ServiceItem, ServiceCategory } from "@/types/service"
-import { SERVICE_UNIT_LABELS } from "@/types/service"
+import { CATALOG_ITEM_TYPE_BADGES, SERVICE_UNIT_LABELS } from "@/types/service"
 
 interface ServiceCardProps {
   service: ServiceItem
@@ -26,6 +26,8 @@ const CATEGORY_COLORS: Record<ServiceCategory, { bg: string; text: string; borde
   Acabamento: { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200" },
   Furação: { bg: "bg-purple-50", text: "text-purple-700", border: "border-purple-200" },
   Instalação: { bg: "bg-indigo-50", text: "text-indigo-700", border: "border-indigo-200" },
+  Materiais: { bg: "bg-amber-50", text: "text-amber-800", border: "border-amber-200" },
+  "Equipe Auxiliar": { bg: "bg-purple-50", text: "text-purple-800", border: "border-purple-200" },
   Outros: { bg: "bg-slate-50", text: "text-slate-700", border: "border-slate-200" },
 }
 
@@ -39,6 +41,7 @@ export function ServiceCard({ service, onEdit, onDelete }: ServiceCardProps) {
   }).format(service.basePrice)
 
   const categoryStyle = CATEGORY_COLORS[service.category] || CATEGORY_COLORS.Outros
+  const typeBadge = CATALOG_ITEM_TYPE_BADGES[service.itemType || "labor"]
 
   return (
     <Card className="flex flex-col justify-between border-slate-200/90 bg-white shadow-xs hover:shadow-md transition-all duration-200 relative group overflow-hidden">
@@ -47,13 +50,21 @@ export function ServiceCard({ service, onEdit, onDelete }: ServiceCardProps) {
 
       <CardHeader className="p-5 pb-3 space-y-3">
         <div className="flex items-start justify-between gap-2">
-          <Badge
-            variant="outline"
-            className={`${categoryStyle.bg} ${categoryStyle.text} ${categoryStyle.border} font-medium text-xs px-2.5 py-0.5 rounded-md`}
-          >
-            {service.category}
-          </Badge>
-          <div className="flex items-center gap-1 text-slate-400 text-xs">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <Badge
+              variant="outline"
+              className={`${typeBadge.className} font-semibold text-[11px] px-2 py-0.5 rounded-md`}
+            >
+              {typeBadge.label}
+            </Badge>
+            <Badge
+              variant="outline"
+              className={`${categoryStyle.bg} ${categoryStyle.text} ${categoryStyle.border} font-medium text-[11px] px-2 py-0.5 rounded-md`}
+            >
+              {service.category}
+            </Badge>
+          </div>
+          <div className="flex items-center gap-1 text-slate-400 text-xs shrink-0">
             <Ruler className="h-3.5 w-3.5" />
             <span className="font-semibold text-slate-700">
               {SERVICE_UNIT_LABELS[service.unit]}
@@ -75,8 +86,10 @@ export function ServiceCard({ service, onEdit, onDelete }: ServiceCardProps) {
               {service.description}
             </p>
             {service.description.length > 80 && (
-              <button
+              <Button
                 type="button"
+                variant="unstyled"
+                size="auto"
                 onClick={() => setIsExpanded(!isExpanded)}
                 className="mt-1 text-[11px] font-medium text-amber-700 hover:text-amber-800 flex items-center gap-0.5"
               >
@@ -89,7 +102,7 @@ export function ServiceCard({ service, onEdit, onDelete }: ServiceCardProps) {
                     Mais detalhes <ChevronDown className="h-3 w-3" />
                   </>
                 )}
-              </button>
+              </Button>
             )}
           </div>
         )}

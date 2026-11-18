@@ -2,81 +2,7 @@ import { create } from "zustand"
 import { persist, createJSONStorage } from "zustand/middleware"
 import type { ActivityEvent } from "@/types/activity"
 
-const nowMs = Date.now()
-const minuteMs = 60 * 1000
-const hourMs = 60 * minuteMs
-
-const INITIAL_ACTIVITIES: ActivityEvent[] = [
-  {
-    id: "act-001",
-    type: "measurement_created",
-    actorName: "Lucas Ferraz",
-    targetTitle: "Assentamento Área Gourmet & Piscina",
-    amount: 4409.0,
-    targetRoute: "/dashboard",
-    timestamp: new Date(nowMs - 20 * minuteMs).toISOString(),
-    isRead: false,
-  },
-  {
-    id: "act-002",
-    type: "measurement_approved",
-    actorName: "Carlos Mendes (Gestor)",
-    targetTitle: "Instalação Cozinha Ilha & Gourmet - Apto 82",
-    amount: 2724.5,
-    targetRoute: "/medicoes",
-    timestamp: new Date(nowMs - 90 * minuteMs).toISOString(),
-    isRead: false,
-  },
-  {
-    id: "act-003",
-    type: "team_member_joined",
-    actorName: "Rafael Silveira",
-    targetTitle: "Alocado como Marceneiro no Residencial Alphaville Zero",
-    targetRoute: "/projetos/proj-001",
-    timestamp: new Date(nowMs - 3.5 * hourMs).toISOString(),
-    isRead: false,
-  },
-  {
-    id: "act-004",
-    type: "measurement_created",
-    actorName: "Tiago Santos",
-    targetTitle: "Revestimento Suíte Master & Nichos",
-    amount: 3129.0,
-    targetRoute: "/dashboard",
-    timestamp: new Date(nowMs - 6 * hourMs).toISOString(),
-    isRead: true,
-  },
-  {
-    id: "act-005",
-    type: "measurement_rejected",
-    actorName: "Carlos Mendes (Gestor)",
-    targetTitle: "Polimento & Bancadas Hall de Entrada",
-    amount: 2490.0,
-    reason: "Favor anexar nota fiscal do hotel e reconfirmar metragem do balcão.",
-    targetRoute: "/dashboard",
-    timestamp: new Date(nowMs - 12 * hourMs).toISOString(),
-    isRead: true,
-  },
-  {
-    id: "act-006",
-    type: "measurement_approved",
-    actorName: "Carlos Mendes (Gestor)",
-    targetTitle: "Bancadas Lavabo & Espelho Iluminado",
-    amount: 608.0,
-    targetRoute: "/medicoes",
-    timestamp: new Date(nowMs - 18 * hourMs).toISOString(),
-    isRead: true,
-  },
-  {
-    id: "act-007",
-    type: "team_member_left",
-    actorName: "Gestão de Obras",
-    targetTitle: "Acesso de colaborador pausado no Ed. Grand Plaza",
-    targetRoute: "/projetos/proj-004",
-    timestamp: new Date(nowMs - 22 * hourMs).toISOString(),
-    isRead: true,
-  },
-]
+const INITIAL_ACTIVITIES: ActivityEvent[] = []
 
 interface ActivityState {
   activities: ActivityEvent[]
@@ -122,7 +48,7 @@ export const useActivityStore = create<ActivityState>()(
       },
     }),
     {
-      name: "@medipro:activity-data",
+      name: "@medipro:activity-data-v2",
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         activities: state.activities,

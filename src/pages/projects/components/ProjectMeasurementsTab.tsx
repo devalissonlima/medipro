@@ -178,8 +178,10 @@ export const ProjectMeasurementsTab: React.FC<ProjectMeasurementsTabProps> = ({
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pt-2 border-t border-slate-100">
           {/* Pills de Status */}
           <div className="flex flex-wrap items-center gap-1.5 text-xs">
-            <button
+            <Button
               type="button"
+              variant="unstyled"
+              size="auto"
               onClick={() => setStatusFilter("all")}
               className={`px-3 py-1 rounded-lg font-semibold text-xs transition-colors flex items-center gap-1.5 ${
                 statusFilter === "all"
@@ -189,10 +191,12 @@ export const ProjectMeasurementsTab: React.FC<ProjectMeasurementsTabProps> = ({
             >
               <span>Todas</span>
               <span className="text-[10px] opacity-80">({statusCounts.all})</span>
-            </button>
+            </Button>
 
-            <button
+            <Button
               type="button"
+              variant="unstyled"
+              size="auto"
               onClick={() => setStatusFilter("pending")}
               className={`px-3 py-1 rounded-lg font-semibold text-xs transition-colors flex items-center gap-1.5 ${
                 statusFilter === "pending"
@@ -202,10 +206,12 @@ export const ProjectMeasurementsTab: React.FC<ProjectMeasurementsTabProps> = ({
             >
               <span>Aguardando</span>
               <span className="text-[10px] font-bold">({statusCounts.pending})</span>
-            </button>
+            </Button>
 
-            <button
+            <Button
               type="button"
+              variant="unstyled"
+              size="auto"
               onClick={() => setStatusFilter("approved")}
               className={`px-3 py-1 rounded-lg font-semibold text-xs transition-colors flex items-center gap-1.5 ${
                 statusFilter === "approved"
@@ -215,11 +221,13 @@ export const ProjectMeasurementsTab: React.FC<ProjectMeasurementsTabProps> = ({
             >
               <span>Aprovadas</span>
               <span className="text-[10px] font-bold">({statusCounts.approved})</span>
-            </button>
+            </Button>
 
             {statusCounts.rework > 0 && (
-              <button
+              <Button
                 type="button"
+                variant="unstyled"
+                size="auto"
                 onClick={() => setStatusFilter("rework")}
                 className={`px-3 py-1 rounded-lg font-semibold text-xs transition-colors flex items-center gap-1.5 ${
                   statusFilter === "rework"
@@ -229,12 +237,14 @@ export const ProjectMeasurementsTab: React.FC<ProjectMeasurementsTabProps> = ({
               >
                 <span>Em Ajuste</span>
                 <span className="text-[10px] font-bold">({statusCounts.rework})</span>
-              </button>
+              </Button>
             )}
 
             {statusCounts.draft > 0 && (
-              <button
+              <Button
                 type="button"
+                variant="unstyled"
+                size="auto"
                 onClick={() => setStatusFilter("draft")}
                 className={`px-3 py-1 rounded-lg font-semibold text-xs transition-colors flex items-center gap-1.5 ${
                   statusFilter === "draft"
@@ -244,7 +254,7 @@ export const ProjectMeasurementsTab: React.FC<ProjectMeasurementsTabProps> = ({
               >
                 <span>Rascunhos</span>
                 <span className="text-[10px] font-bold">({statusCounts.draft})</span>
-              </button>
+              </Button>
             )}
           </div>
 
@@ -333,14 +343,16 @@ export const ProjectMeasurementsTab: React.FC<ProjectMeasurementsTabProps> = ({
 
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <button
+                        <Button
                           type="button"
+                          variant="unstyled"
+                          size="auto"
                           onClick={() => navigate(`/medicoes/${measurement.id}`)}
                           className="text-sm font-bold text-slate-900 hover:text-amber-600 hover:underline transition-colors truncate text-left"
                           title="Abrir página dedicada da medição"
                         >
                           {measurement.title}
-                        </button>
+                        </Button>
                         <MeasurementStatusBadge status={measurement.status} />
                         <span className="font-mono text-[10px] text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200">
                           #{measurement.id}

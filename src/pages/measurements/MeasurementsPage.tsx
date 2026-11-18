@@ -152,13 +152,16 @@ export function MeasurementsPage() {
               className="pl-9 pr-9 h-10 border-slate-200 bg-white shadow-2xs focus-visible:ring-amber-500 text-xs"
             />
             {searchTerm && (
-              <button
+              <Button
+                type="button"
+                variant="unstyled"
+                size="auto"
                 onClick={() => setSearchTerm("")}
                 className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600"
                 aria-label="Limpar busca"
               >
                 <X className="h-4 w-4" />
-              </button>
+              </Button>
             )}
           </div>
 
@@ -167,9 +170,11 @@ export function MeasurementsPage() {
             {statusOptions.map((opt) => {
               const isSelected = statusFilter === opt.value
               return (
-                <button
+                <Button
                   key={opt.value}
                   type="button"
+                  variant="unstyled"
+                  size="auto"
                   onClick={() => setStatusFilter(opt.value)}
                   className={`shrink-0 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all ${
                     isSelected
@@ -187,7 +192,7 @@ export function MeasurementsPage() {
                   >
                     {opt.count}
                   </span>
-                </button>
+                </Button>
               )
             })}
           </div>

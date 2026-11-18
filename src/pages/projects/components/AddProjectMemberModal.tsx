@@ -183,8 +183,10 @@ export const AddProjectMemberModal: React.FC<AddProjectMemberModalProps> = ({
 
         {/* Seletor de Modo: Existente x Novo */}
         <div className="grid grid-cols-2 gap-1.5 rounded-lg bg-slate-100 p-1">
-          <button
+          <Button
             type="button"
+            variant="unstyled"
+            size="auto"
             onClick={() => {
               setMode("existing")
               setError("")
@@ -197,9 +199,11 @@ export const AddProjectMemberModal: React.FC<AddProjectMemberModalProps> = ({
           >
             <Users className="h-3.5 w-3.5" />
             Selecionar Existente
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="unstyled"
+            size="auto"
             onClick={() => {
               setMode("new")
               setError("")
@@ -212,7 +216,7 @@ export const AddProjectMemberModal: React.FC<AddProjectMemberModalProps> = ({
           >
             <UserPlus className="h-3.5 w-3.5" />
             Cadastrar Novo
-          </button>
+          </Button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">

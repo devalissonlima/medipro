@@ -4,9 +4,18 @@ import { formatCurrency } from "@/utils/calculations"
 
 interface SummaryFooterProps {
   servicesTotal: number
+  laborTotal?: number
+  materialTotal?: number
+  subcontractTotal?: number
   inScopeTotal?: number
   auditPendingTotal?: number
-  costsTotal: number
+  costsTotal?: number
+  showCostsTotal?: boolean
+  itemsLabel?: string
+  totalLabel?: string
+  finalizeLabel?: string
+  draftLabel?: string
+  hideFinalize?: boolean
   grandTotal: number
   isSubmitting: boolean
   onSaveDraft: () => void
@@ -15,28 +24,57 @@ interface SummaryFooterProps {
 
 export function SummaryFooter({
   servicesTotal,
+  laborTotal = 0,
+  materialTotal = 0,
+  subcontractTotal = 0,
   inScopeTotal,
   auditPendingTotal = 0,
-  costsTotal,
+  costsTotal = 0,
+  showCostsTotal = true,
+  itemsLabel = "Itens / Serviços:",
+  totalLabel = "VALOR TOTAL DA MEDIÇÃO:",
+  finalizeLabel = "Finalizar e Enviar",
+  draftLabel = "Salvar Rascunho",
+  hideFinalize = false,
   grandTotal,
   isSubmitting,
   onSaveDraft,
   onFinalize,
 }: SummaryFooterProps) {
+  const hasNatureBreakdown =
+    laborTotal > 0 || materialTotal > 0 || subcontractTotal > 0
+
   return (
     <div className="sticky bottom-0 z-20 w-full border-t border-slate-200/90 bg-white/95 backdrop-blur-md px-4 py-3.5 sm:px-8 shadow-lg shadow-slate-900/10 transition-all">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
         {/* Totalizadores em tempo real */}
-        <div className="flex flex-wrap items-baseline gap-4 sm:gap-6">
+        <div className="flex flex-wrap items-baseline gap-4 sm:gap-5">
           {/* Subtotal Serviços */}
           <div className="space-y-0.5">
             <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
-              Serviços:
+              {itemsLabel}
             </span>
             <span className="text-sm font-bold text-slate-800 font-mono">
               {formatCurrency(servicesTotal)}
             </span>
           </div>
+
+          {/* Quebra de totais por natureza */}
+          {hasNatureBreakdown && (
+            <div className="flex flex-wrap items-center gap-2.5 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200 text-[11px] font-mono">
+              <span className="text-blue-700 font-semibold">
+                Mão de Obra: {formatCurrency(laborTotal)}
+              </span>
+              <span className="text-slate-300">|</span>
+              <span className="text-amber-800 font-semibold">
+                Materiais: {formatCurrency(materialTotal)}
+              </span>
+              <span className="text-slate-300">|</span>
+              <span className="text-purple-700 font-semibold">
+                Ajudantes: {formatCurrency(subcontractTotal)}
+              </span>
+            </div>
+          )}
 
           {/* Destaque de Separação: No Escopo vs. Excedente em Auditoria */}
           {auditPendingTotal > 0 && (
@@ -59,24 +97,27 @@ export function SummaryFooter({
             </div>
           )}
 
-          <span className="text-slate-300 hidden sm:inline">+</span>
-
           {/* Subtotal Despesas */}
-          <div className="space-y-0.5">
-            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
-              Despesas / Campo:
-            </span>
-            <span className="text-sm font-bold text-slate-800 font-mono">
-              {formatCurrency(costsTotal)}
-            </span>
-          </div>
+          {showCostsTotal && (
+            <>
+              <span className="text-slate-300 hidden sm:inline">+</span>
+              <div className="space-y-0.5">
+                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
+                  Despesas / Campo:
+                </span>
+                <span className="text-sm font-bold text-slate-800 font-mono">
+                  {formatCurrency(costsTotal)}
+                </span>
+              </div>
+            </>
+          )}
 
           <span className="text-slate-300 hidden sm:inline">=</span>
 
           {/* TOTAL GERAL */}
           <div className="space-y-0.5 pl-2 sm:pl-4 border-l border-slate-200">
             <span className="text-[11px] font-black text-emerald-800 uppercase tracking-wider block">
-              VALOR TOTAL DA MEDIÇÃO:
+              {totalLabel}
             </span>
             <div className="flex items-baseline gap-1.5">
               <span className="text-2xl sm:text-3xl font-black text-emerald-600 font-mono tracking-tight">
@@ -89,22 +130,24 @@ export function SummaryFooter({
         {/* Ações */}
         <div className="flex items-center gap-2.5 justify-end">
           {/* Botão Secundário: Finalizar e Enviar */}
-          <Button
-            type="button"
-            variant="outline"
-            disabled={isSubmitting}
-            onClick={onFinalize}
-            className="text-xs h-10 px-4 border-slate-300 text-slate-700 hover:bg-slate-100 hover:text-slate-900 font-semibold gap-2"
-          >
-            {isSubmitting ? (
-              <span>Processando...</span>
-            ) : (
-              <>
-                <Check className="h-4 w-4 text-emerald-600" />
-                <span>Finalizar e Enviar</span>
-              </>
-            )}
-          </Button>
+          {!hideFinalize && (
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isSubmitting}
+              onClick={onFinalize}
+              className="text-xs h-10 px-4 border-slate-300 text-slate-700 hover:bg-slate-100 hover:text-slate-900 font-semibold gap-2"
+            >
+              {isSubmitting ? (
+                <span>Processando...</span>
+              ) : (
+                <>
+                  <Check className="h-4 w-4 text-emerald-600" />
+                  <span>{finalizeLabel}</span>
+                </>
+              )}
+            </Button>
+          )}
 
           {/* Botão Primário: Salvar Rascunho */}
           <Button
@@ -114,7 +157,7 @@ export function SummaryFooter({
             className="text-xs h-10 px-5 bg-slate-900 text-white hover:bg-slate-800 font-bold shadow-md gap-2"
           >
             <FileText className="h-4 w-4 text-amber-400" />
-            <span>Salvar Rascunho</span>
+            <span>{draftLabel}</span>
           </Button>
         </div>
       </div>

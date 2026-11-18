@@ -57,6 +57,13 @@ export function MeasurementDetailView({
       user?.role === "PROJECT_SUPERVISOR" ||
       user?.role === "MASTER")
 
+  const effectiveSignatureUrl = measurement.signatureUrl || user?.signatureUrl
+  const effectiveSignatureName =
+    measurement.signatureName ||
+    user?.signatureName ||
+    measurement.collaboratorName ||
+    "Profissional Responsável"
+
   return (
     <div className="bg-slate-50/90 border-t border-slate-200/90 p-4 sm:p-6 space-y-5 animate-in fade-in duration-200">
       {/* Nota de Revisão se já estiver em status 'rework' */}
@@ -237,8 +244,10 @@ export function MeasurementDetailView({
 
                               {item.evidencePhotoUrl && (
                                 <div className="sm:col-span-3 flex items-center justify-start sm:justify-end">
-                                  <button
+                                  <Button
                                     type="button"
+                                    variant="unstyled"
+                                    size="auto"
                                     onClick={() =>
                                       setPreviewPhotoUrl(item.evidencePhotoUrl || null)
                                     }
@@ -253,7 +262,7 @@ export function MeasurementDetailView({
                                     <div className="absolute inset-0 bg-slate-900/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                                       <Camera className="h-3.5 w-3.5 text-white" />
                                     </div>
-                                  </button>
+                                  </Button>
                                 </div>
                               )}
                             </div>
@@ -341,6 +350,27 @@ export function MeasurementDetailView({
                 <p className="italic">{measurement.operationalCosts.notes}</p>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Assinatura Digital do Executor */}
+      {effectiveSignatureUrl && (
+        <div className="rounded-xl border border-slate-200 bg-white p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="space-y-0.5">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+              Assinatura Digital Registrada
+            </span>
+            <p className="text-xs font-bold text-slate-800">
+              {effectiveSignatureName}
+            </p>
+          </div>
+          <div className="h-12 px-3 rounded-lg border border-slate-100 bg-slate-50/70 flex items-center justify-center shrink-0">
+            <img
+              src={effectiveSignatureUrl}
+              alt={`Assinatura digital de ${effectiveSignatureName}`}
+              className="max-h-10 max-w-[180px] object-contain"
+            />
           </div>
         </div>
       )}

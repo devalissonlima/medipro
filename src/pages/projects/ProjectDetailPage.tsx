@@ -5,6 +5,7 @@ import {
   Building2,
   LayoutDashboard,
   File,
+  ReceiptText,
   Users,
   Plus,
   MapPin,
@@ -19,9 +20,11 @@ import { PROJECT_STATUS_CONFIG, type ProjectStatus } from "@/types/project"
 import { getProjectUrl } from "@/utils/projectRoutes"
 import { useAuthStore } from "@/stores/authStore"
 import { useRecentAccessStore } from "@/stores/recentAccessStore"
+import { useBudgetsStore } from "@/stores/budgetsStore"
 import { useProjectDetail } from "./hooks/useProjectDetail"
 import { ProjectDashboardTab } from "./components/ProjectDashboardTab"
 import { ProjectMeasurementsTab } from "./components/ProjectMeasurementsTab"
+import { ProjectBudgetsTab } from "./components/ProjectBudgetsTab"
 import { ProjectTeamTab } from "./components/ProjectTeamTab"
 import { AddProjectMemberModal } from "./components/AddProjectMemberModal"
 
@@ -63,11 +66,21 @@ export const ProjectDetailPage: React.FC = () => {
   // Detecção da aba ativa pela URL
   const isTeamRoute = location.pathname.endsWith("/equipe")
   const isMeasurementsRoute = location.pathname.endsWith("/medicoes")
-  const currentTab: "dashboard" | "measurements" | "team" = isTeamRoute
+  const isBudgetsRoute = location.pathname.endsWith("/orcamentos")
+  const currentTab: "dashboard" | "measurements" | "budgets" | "team" = isTeamRoute
     ? "team"
+    : isBudgetsRoute
+    ? "budgets"
     : isMeasurementsRoute
     ? "measurements"
     : "dashboard"
+
+  const canViewBudgetsTab = !isMember
+  const budgets = useBudgetsStore((state) => state.budgets)
+  const projectBudgetsCount = React.useMemo(
+    () => budgets.filter((b) => b.projectId === id).length,
+    [budgets, id]
+  )
 
   // Restringir criação de medição na obra exclusivamente a SOLO e MEMBER
   const canCreateMeasurement = user?.role === "SOLO" || user?.role === "MEMBER"
@@ -79,10 +92,21 @@ export const ProjectDetailPage: React.FC = () => {
   }, [project?.id, user?.id, trackProjectView])
 
   React.useEffect(() => {
-    if (isTeamRoute && !canViewTeamTab && project) {
+    if (
+      ((isTeamRoute && !canViewTeamTab) ||
+        (isBudgetsRoute && !canViewBudgetsTab)) &&
+      project
+    ) {
       navigate(getProjectUrl(project, "dashboard"), { replace: true })
     }
-  }, [isTeamRoute, canViewTeamTab, project, navigate])
+  }, [
+    isTeamRoute,
+    canViewTeamTab,
+    isBudgetsRoute,
+    canViewBudgetsTab,
+    project,
+    navigate,
+  ])
 
   // Mantém a rota canônica projetos > [idpasta] > [idprojeto] > [tab] quando o projeto pertence a uma pasta
   React.useEffect(() => {
@@ -90,6 +114,8 @@ export const ProjectDetailPage: React.FC = () => {
     const tabSlug =
       currentTab === "team"
         ? "equipe"
+        : currentTab === "budgets"
+        ? "orcamentos"
         : currentTab === "measurements"
         ? "medicoes"
         : "dashboard"
@@ -218,8 +244,10 @@ export const ProjectDetailPage: React.FC = () => {
         {/* Submenu com 3 Abas: Dashboard, Medições e Equipe */}
         <div className="flex items-center gap-1.5 sm:gap-2 border-t border-slate-100 pt-3 overflow-x-auto">
           {/* Aba 1: Dashboard */}
-          <button
+          <Button
             type="button"
+            variant="unstyled"
+            size="auto"
             onClick={() => navigate(getProjectUrl(project, "dashboard"))}
             className={`flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs font-semibold transition-colors shrink-0 ${
               currentTab === "dashboard"
@@ -229,11 +257,13 @@ export const ProjectDetailPage: React.FC = () => {
           >
             <LayoutDashboard className="h-4 w-4" />
             <span>Dashboard</span>
-          </button>
+          </Button>
 
           {/* Aba 2: Medições */}
-          <button
+          <Button
             type="button"
+            variant="unstyled"
+            size="auto"
             onClick={() => navigate(getProjectUrl(project, "medicoes"))}
             className={`flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs font-semibold transition-colors shrink-0 ${
               currentTab === "measurements"
@@ -246,12 +276,35 @@ export const ProjectDetailPage: React.FC = () => {
             <span className="rounded-full bg-white/90 px-1.5 py-0.2 text-[10px] font-bold text-slate-700 border border-slate-200">
               {projectMeasurements.length}
             </span>
-          </button>
+          </Button>
 
-          {/* Aba 3: Equipe (oculta para membros e solo sem permissão) */}
-          {canViewTeamTab && (
-            <button
+          {/* Aba 3: Orçamentos (oculta para MEMBER) */}
+          {canViewBudgetsTab && (
+            <Button
               type="button"
+              variant="unstyled"
+              size="auto"
+              onClick={() => navigate(getProjectUrl(project, "orcamentos"))}
+              className={`flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs font-semibold transition-colors shrink-0 ${
+                currentTab === "budgets"
+                  ? "bg-amber-500/15 text-amber-900 border border-amber-500/30"
+                  : "text-slate-600 hover:bg-slate-100 border border-transparent"
+              }`}
+            >
+              <ReceiptText className="h-4 w-4" />
+              <span>Orçamentos</span>
+              <span className="rounded-full bg-white/90 px-1.5 py-0.2 text-[10px] font-bold text-slate-700 border border-slate-200">
+                {projectBudgetsCount}
+              </span>
+            </Button>
+          )}
+
+          {/* Aba 4: Equipe (oculta para membros e solo sem permissão) */}
+          {canViewTeamTab && (
+            <Button
+              type="button"
+              variant="unstyled"
+              size="auto"
               onClick={() => navigate(getProjectUrl(project, "equipe"))}
               className={`flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs font-semibold transition-colors shrink-0 ${
                 currentTab === "team"
@@ -264,7 +317,7 @@ export const ProjectDetailPage: React.FC = () => {
               <span className="rounded-full bg-white/90 px-1.5 py-0.2 text-[10px] font-bold text-slate-700 border border-slate-200">
                 {activeMembersCount}/{project.maxMembers}
               </span>
-            </button>
+            </Button>
           )}
         </div>
       </div>
@@ -300,6 +353,10 @@ export const ProjectDetailPage: React.FC = () => {
           onDelete={deleteMeasurement}
           onFinalize={finalizeMeasurement}
         />
+      )}
+
+      {currentTab === "budgets" && canViewBudgetsTab && (
+        <ProjectBudgetsTab project={project} />
       )}
 
       {currentTab === "team" && canViewTeamTab && (

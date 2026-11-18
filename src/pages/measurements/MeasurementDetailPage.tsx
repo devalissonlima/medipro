@@ -101,6 +101,12 @@ export function MeasurementDetailPage() {
 
   const canEdit = measurement.status !== "approved"
   const isDraft = measurement.status === "draft"
+  const effectiveSignatureUrl = measurement.signatureUrl || user?.signatureUrl
+  const effectiveSignatureName =
+    measurement.signatureName ||
+    user?.signatureName ||
+    measurement.collaboratorName ||
+    "Profissional Responsável"
 
   const handleCopyLink = () => {
     const fullUrl = `${window.location.origin}/#/medicoes/${measurement.id}`
@@ -230,7 +236,15 @@ export function MeasurementDetailPage() {
                   <span>Link de Compartilhamento</span>
                 </DropdownMenuItem>
 
-                <DropdownMenuItem onClick={() => exportMeasurementToPDF(measurement)}>
+                <DropdownMenuItem
+                  onClick={() =>
+                    exportMeasurementToPDF({
+                      ...measurement,
+                      signatureUrl: effectiveSignatureUrl,
+                      signatureName: effectiveSignatureName,
+                    })
+                  }
+                >
                   <Printer className="h-4 w-4 text-blue-600" />
                   <span>Imprimir / Salvar PDF</span>
                 </DropdownMenuItem>
@@ -532,8 +546,10 @@ export function MeasurementDetailPage() {
 
                                 {item.evidencePhotoUrl && (
                                   <div className="sm:col-span-3 flex items-center justify-start sm:justify-end">
-                                    <button
+                                    <Button
                                       type="button"
+                                      variant="unstyled"
+                                      size="auto"
                                       onClick={() =>
                                         setPreviewPhotoUrl(item.evidencePhotoUrl || null)
                                       }
@@ -548,7 +564,7 @@ export function MeasurementDetailPage() {
                                       <div className="absolute inset-0 bg-slate-900/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                                         <Camera className="h-3.5 w-3.5 text-white" />
                                       </div>
-                                    </button>
+                                    </Button>
                                   </div>
                                 )}
                               </div>
@@ -655,6 +671,39 @@ export function MeasurementDetailPage() {
             <span className="text-xl sm:text-2xl font-black font-mono text-amber-400">
               {formatCurrency(measurement.grandTotal)}
             </span>
+          </div>
+        </div>
+
+        {/* Bloco de Assinaturas Digitais & Validação */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 pt-6 border-t border-slate-100 text-center text-xs text-slate-600">
+          <div>
+            <div className="h-16 flex items-end justify-center pb-1.5">
+              {effectiveSignatureUrl && (
+                <img
+                  src={effectiveSignatureUrl}
+                  alt={`Assinatura digital de ${effectiveSignatureName}`}
+                  className="max-h-14 max-w-[220px] object-contain"
+                />
+              )}
+            </div>
+            <div className="border-t border-slate-300 pt-2">
+              <p className="font-bold text-slate-800">{effectiveSignatureName}</p>
+              <p className="text-[11px] text-slate-400">
+                Executor / Responsável pela Medição
+              </p>
+            </div>
+          </div>
+
+          <div>
+            <div className="h-16" />
+            <div className="border-t border-slate-300 pt-2">
+              <p className="font-bold text-slate-800">
+                {measurement.clientName || "Cliente / Fiscal da Obra"}
+              </p>
+              <p className="text-[11px] text-slate-400">
+                Aprovação / Conferência da Obra
+              </p>
+            </div>
           </div>
         </div>
       </div>

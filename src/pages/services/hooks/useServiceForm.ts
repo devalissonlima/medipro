@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react"
 import { useServicesStore } from "@/stores/servicesStore"
-import type { ServiceCategory, ServiceUnit } from "@/types/service"
+import type { CatalogItemType, ServiceCategory, ServiceUnit } from "@/types/service"
 
 export function useServiceForm() {
   const { isFormOpen, editingService, closeFormModal, addService, updateService } =
     useServicesStore()
 
+  const [itemType, setItemType] = useState<CatalogItemType>("labor")
   const [name, setName] = useState("")
   const [category, setCategory] = useState<ServiceCategory>("Assentamento")
   const [unit, setUnit] = useState<ServiceUnit>("m2")
@@ -18,6 +19,7 @@ export function useServiceForm() {
   // Reseta ou popula campos ao abrir modal
   useEffect(() => {
     if (editingService) {
+      setItemType(editingService.itemType || "labor")
       setName(editingService.name)
       setCategory(editingService.category)
       setUnit(editingService.unit)
@@ -25,6 +27,7 @@ export function useServiceForm() {
       setComplexityTags(editingService.complexityTags || [])
       setDescription(editingService.description || "")
     } else {
+      setItemType("labor")
       setName("")
       setCategory("Assentamento")
       setUnit("m2")
@@ -35,6 +38,22 @@ export function useServiceForm() {
     setTagInput("")
     setErrors({})
   }, [editingService, isFormOpen])
+
+  const handleItemTypeChange = (nextType: CatalogItemType) => {
+    setItemType(nextType)
+    if (!editingService) {
+      if (nextType === "material") {
+        setCategory("Materiais")
+        setUnit("un")
+      } else if (nextType === "subcontract") {
+        setCategory("Equipe Auxiliar")
+        setUnit("diaria")
+      } else {
+        setCategory("Assentamento")
+        setUnit("m2")
+      }
+    }
+  }
 
   const addTag = (tagToAdd: string) => {
     const trimmed = tagToAdd.trim()
@@ -52,7 +71,7 @@ export function useServiceForm() {
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {}
     if (!name.trim()) {
-      newErrors.name = "O nome do serviço é obrigatório."
+      newErrors.name = "O nome do item é obrigatório."
     }
 
     const priceNum = parseFloat(basePrice.replace(",", "."))
@@ -72,6 +91,7 @@ export function useServiceForm() {
 
     if (editingService) {
       updateService(editingService.id, {
+        itemType,
         name: name.trim(),
         category,
         unit,
@@ -81,6 +101,7 @@ export function useServiceForm() {
       })
     } else {
       addService({
+        itemType,
         name: name.trim(),
         category,
         unit,
@@ -93,6 +114,8 @@ export function useServiceForm() {
 
   return {
     isEditing: !!editingService,
+    itemType,
+    setItemType: handleItemTypeChange,
     name,
     setName,
     category,

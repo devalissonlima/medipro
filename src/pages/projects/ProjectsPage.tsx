@@ -334,9 +334,11 @@ export const ProjectsPage: React.FC = () => {
             {recentProjects.map((proj) => {
               const statusInfo = PROJECT_STATUS_CONFIG[proj.status]
               return (
-                <button
+                <Button
                   key={proj.id}
                   type="button"
+                  variant="unstyled"
+                  size="auto"
                   onClick={() => navigate(getProjectUrl(proj, "dashboard"))}
                   className="group flex flex-col justify-between rounded-lg border border-slate-200/80 bg-slate-50/60 p-3 text-left transition-all hover:border-amber-400 hover:bg-white hover:shadow-xs"
                 >
@@ -359,7 +361,7 @@ export const ProjectsPage: React.FC = () => {
                     <Building2 className="h-3 w-3 text-slate-400 shrink-0" />
                     <span className="truncate">{proj.resolvedClientName}</span>
                   </div>
-                </button>
+                </Button>
               )
             })}
           </div>
@@ -381,14 +383,16 @@ export const ProjectsPage: React.FC = () => {
             className="pl-9 pr-8 h-9 text-xs bg-slate-50/50 focus:bg-white"
           />
           {searchQuery && (
-            <button
+            <Button
               type="button"
+              variant="unstyled"
+              size="auto"
               onClick={() => setSearchQuery("")}
               className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600"
               aria-label="Limpar busca"
             >
               <X className="h-4 w-4" />
-            </button>
+            </Button>
           )}
         </div>
 
@@ -396,9 +400,11 @@ export const ProjectsPage: React.FC = () => {
           {statusTabs.map((tab) => {
             const isSelected = statusFilter === tab.value
             return (
-              <button
+              <Button
                 key={tab.value}
                 type="button"
+                variant="unstyled"
+                size="auto"
                 onClick={() => setStatusFilter(tab.value)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
                   isSelected
@@ -407,7 +413,7 @@ export const ProjectsPage: React.FC = () => {
                 }`}
               >
                 {tab.label}
-              </button>
+              </Button>
             )
           })}
         </div>
@@ -425,14 +431,16 @@ export const ProjectsPage: React.FC = () => {
             </div>
 
             {canManageFolders && (
-              <button
+              <Button
                 type="button"
+                variant="unstyled"
+                size="auto"
                 onClick={openCreateFolderModal}
                 className="text-xs font-semibold text-amber-700 hover:text-amber-800 hover:underline flex items-center gap-1"
               >
                 <Plus className="h-3.5 w-3.5" />
                 <span>Nova Pasta</span>
-              </button>
+              </Button>
             )}
           </div>
 
@@ -643,9 +651,11 @@ export const ProjectsPage: React.FC = () => {
                 {Object.entries(FOLDER_COLOR_STYLES).map(([colorKey, style]) => {
                   const isSelected = folderColorInput === colorKey
                   return (
-                    <button
+                    <Button
                       key={colorKey}
                       type="button"
+                      variant="unstyled"
+                      size="auto"
                       onClick={() => setFolderColorInput(colorKey)}
                       className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-all ${
                         isSelected
@@ -655,7 +665,7 @@ export const ProjectsPage: React.FC = () => {
                     >
                       <span className={`h-2.5 w-2.5 rounded-full ${style.dot}`} />
                       <span>{style.label}</span>
-                    </button>
+                    </Button>
                   )
                 })}
               </div>
@@ -748,8 +758,10 @@ export const ProjectsPage: React.FC = () => {
 
           <div className="space-y-2 py-2 max-h-64 overflow-y-auto">
             {/* Opção Raiz / Sem Pasta */}
-            <button
+            <Button
               type="button"
+              variant="unstyled"
+              size="auto"
               onClick={() => setTargetFolderId("")}
               className={`flex w-full items-center justify-between rounded-xl border p-3 text-left text-xs transition-all ${
                 targetFolderId === ""
@@ -764,15 +776,17 @@ export const ProjectsPage: React.FC = () => {
               {targetFolderId === "" && (
                 <Check className="h-4 w-4 text-amber-600" />
               )}
-            </button>
+            </Button>
 
             {/* Lista de Pastas */}
             {folders.map((folder) => {
               const isSelected = targetFolderId === folder.id
               return (
-                <button
+                <Button
                   key={folder.id}
                   type="button"
+                  variant="unstyled"
+                  size="auto"
                   onClick={() => setTargetFolderId(folder.id)}
                   className={`flex w-full items-center justify-between rounded-xl border p-3 text-left text-xs transition-all ${
                     isSelected
@@ -785,7 +799,7 @@ export const ProjectsPage: React.FC = () => {
                     <span>{folder.name}</span>
                   </div>
                   {isSelected && <Check className="h-4 w-4 text-amber-600" />}
-                </button>
+                </Button>
               )
             })}
           </div>

@@ -1,10 +1,14 @@
 import type { Measurement } from "@/types/measurement"
+import type { Budget } from "@/types/budget"
 
-export interface MeasurementDateGroup {
+export interface DateGroup<T> {
   id: string
   label: string
-  items: Measurement[]
+  items: T[]
 }
+
+export type MeasurementDateGroup = DateGroup<Measurement>
+export type BudgetDateGroup = DateGroup<Budget>
 
 const PT_BR_MONTHS = [
   "Janeiro",
@@ -27,16 +31,25 @@ function parseToLocalMidnight(dateStr?: string): Date {
     return new Date(now.getFullYear(), now.getMonth(), now.getDate())
   }
 
-  const ymdMatch = /^(\d{4})-(\d{2})-(\d{2})/.exec(dateStr.trim())
-  if (ymdMatch) {
-    const year = Number(ymdMatch[1])
-    const month = Number(ymdMatch[2]) - 1
-    const day = Number(ymdMatch[3])
+  const trimmed = dateStr.trim()
+  const dateOnlyMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(trimmed)
+  if (dateOnlyMatch) {
+    const year = Number(dateOnlyMatch[1])
+    const month = Number(dateOnlyMatch[2]) - 1
+    const day = Number(dateOnlyMatch[3])
     return new Date(year, month, day)
   }
 
-  const parsed = new Date(dateStr)
+  const parsed = new Date(trimmed)
   if (isNaN(parsed.getTime())) {
+    const ymdFallback = /^(\d{4})-(\d{2})-(\d{2})/.exec(trimmed)
+    if (ymdFallback) {
+      return new Date(
+        Number(ymdFallback[1]),
+        Number(ymdFallback[2]) - 1,
+        Number(ymdFallback[3])
+      )
+    }
     const now = new Date()
     return new Date(now.getFullYear(), now.getMonth(), now.getDate())
   }
@@ -45,18 +58,32 @@ function parseToLocalMidnight(dateStr?: string): Date {
 }
 
 /**
- * Classifica cada medição nos grupos temporais estilo Outlook:
+ * Formata uma string ISO ou YYYY-MM-DD para DD/MM/YYYY respeitando o dia calendário local.
+ */
+export function formatShortDatePtBr(dateStr?: string): string {
+  if (!dateStr) return "—"
+  const d = parseToLocalMidnight(dateStr)
+  const day = String(d.getDate()).padStart(2, "0")
+  const month = String(d.getMonth() + 1).padStart(2, "0")
+  const year = d.getFullYear()
+  return `${day}/${month}/${year}`
+}
+
+/**
+ * Motor genérico de agrupamento temporal estilo Outlook:
  * 1. "Hoje"
  * 2. "Ontem"
  * 3. "Últimos 7 dias" (entre 2 e 7 dias atrás)
  * 4. Agrupamento Mensal ("Novembro de 2026", "Outubro de 2026", etc.)
  * Não retorna grupos vazios.
  */
-export function groupMeasurementsByDate(
-  measurements: Measurement[],
+function groupItemsByDate<T>(
+  items: T[],
+  getReferenceDateStr: (item: T) => string | undefined,
+  getTieBreakerStr: (item: T) => string | undefined,
   referenceDate: Date = new Date()
-): MeasurementDateGroup[] {
-  if (!measurements || measurements.length === 0) return []
+): DateGroup<T>[] {
+  if (!items || items.length === 0) return []
 
   const todayMidnight = new Date(
     referenceDate.getFullYear(),
@@ -64,33 +91,39 @@ export function groupMeasurementsByDate(
     referenceDate.getDate()
   )
 
-  const todayItems: Measurement[] = []
-  const yesterdayItems: Measurement[] = []
-  const last7DaysItems: Measurement[] = []
+  const todayItems: T[] = []
+  const yesterdayItems: T[] = []
+  const last7DaysItems: T[] = []
   const monthlyBuckets = new Map<
     string,
-    { sortKey: number; label: string; items: Measurement[] }
+    { sortKey: number; label: string; items: T[] }
   >()
 
-  // Ordena todas as medições da mais recente para a mais antiga antes de agrupar
-  const sorted = [...measurements].sort((a, b) => {
-    const dA = parseToLocalMidnight(a.date || a.createdAt).getTime()
-    const dB = parseToLocalMidnight(b.date || b.createdAt).getTime()
+  // Ordena todos os itens do mais recente para o mais antigo antes de agrupar
+  const sorted = [...items].sort((a, b) => {
+    const refA = getReferenceDateStr(a)
+    const refB = getReferenceDateStr(b)
+    const dA = parseToLocalMidnight(refA).getTime()
+    const dB = parseToLocalMidnight(refB).getTime()
     if (dB !== dA) return dB - dA
-    return (b.createdAt || "").localeCompare(a.createdAt || "")
+
+    const refCmp = (refB || "").localeCompare(refA || "")
+    if (refCmp !== 0) return refCmp
+
+    return (getTieBreakerStr(b) || "").localeCompare(getTieBreakerStr(a) || "")
   })
 
-  for (const m of sorted) {
-    const itemDate = parseToLocalMidnight(m.date || m.createdAt)
+  for (const item of sorted) {
+    const itemDate = parseToLocalMidnight(getReferenceDateStr(item))
     const diffMs = todayMidnight.getTime() - itemDate.getTime()
     const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24))
 
     if (diffDays <= 0) {
-      todayItems.push(m)
+      todayItems.push(item)
     } else if (diffDays === 1) {
-      yesterdayItems.push(m)
+      yesterdayItems.push(item)
     } else if (diffDays >= 2 && diffDays <= 7) {
-      last7DaysItems.push(m)
+      last7DaysItems.push(item)
     } else {
       const year = itemDate.getFullYear()
       const month = itemDate.getMonth()
@@ -100,18 +133,18 @@ export function groupMeasurementsByDate(
 
       const existing = monthlyBuckets.get(key)
       if (existing) {
-        existing.items.push(m)
+        existing.items.push(item)
       } else {
         monthlyBuckets.set(key, {
           sortKey,
           label,
-          items: [m],
+          items: [item],
         })
       }
     }
   }
 
-  const result: MeasurementDateGroup[] = []
+  const result: DateGroup<T>[] = []
 
   if (todayItems.length > 0) {
     result.push({
@@ -152,4 +185,36 @@ export function groupMeasurementsByDate(
   }
 
   return result
+}
+
+/**
+ * Classifica cada medição nos grupos temporais estilo Outlook,
+ * considerando data da última alteração ou lançamento.
+ */
+export function groupMeasurementsByDate(
+  measurements: Measurement[],
+  referenceDate: Date = new Date()
+): MeasurementDateGroup[] {
+  return groupItemsByDate(
+    measurements,
+    (m) => m.updatedAt || m.date || m.createdAt,
+    (m) => m.createdAt,
+    referenceDate
+  )
+}
+
+/**
+ * Classifica cada orçamento nos grupos temporais estilo Outlook,
+ * considerando data de última alteração ou geração (updatedAt || createdAt).
+ */
+export function groupBudgetsByDate(
+  budgets: Budget[],
+  referenceDate: Date = new Date()
+): BudgetDateGroup[] {
+  return groupItemsByDate(
+    budgets,
+    (b) => b.updatedAt || b.createdAt,
+    (b) => b.createdAt,
+    referenceDate
+  )
 }

@@ -68,9 +68,11 @@ export const ActivityTimeline24h: React.FC<ActivityTimeline24hProps> = ({
           const count = tabCounts[tab.id];
 
           return (
-            <button
+            <Button
               key={tab.id}
               type="button"
+              variant="unstyled"
+              size="auto"
               onClick={() => onTabChange(tab.id)}
               className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
                 isActive
@@ -88,7 +90,7 @@ export const ActivityTimeline24h: React.FC<ActivityTimeline24hProps> = ({
               >
                 {count}
               </span>
-            </button>
+            </Button>
           );
         })}
       </div>

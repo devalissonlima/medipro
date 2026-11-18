@@ -140,6 +140,14 @@ export function exportMeasurementToPDF(measurement: Measurement): void {
       ? "REJEITADA"
       : "RASCUNHO"
 
+  const executorSignerName =
+    measurement.signatureName ||
+    measurement.collaboratorName ||
+    "Profissional Responsável"
+  const executorSignatureImg = measurement.signatureUrl
+    ? `<img src="${measurement.signatureUrl}" alt="Assinatura Digital" style="max-height: 56px; max-width: 220px; object-fit: contain; display: block;" />`
+    : ""
+
   const html = `
     <!DOCTYPE html>
     <html lang="pt-BR">
@@ -218,13 +226,17 @@ export function exportMeasurementToPDF(measurement: Measurement): void {
       </div>
 
       <!-- Assinaturas -->
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 60px; padding-top: 24px; text-align: center;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 40px; padding-top: 16px; text-align: center;">
         <div>
+          <div style="height: 62px; display: flex; align-items: flex-end; justify-content: center; margin-bottom: 6px;">
+            ${executorSignatureImg}
+          </div>
           <div style="border-top: 1px solid #94a3b8; width: 80%; margin: 0 auto 8px auto;"></div>
-          <div style="font-size: 12px; font-weight: 700; color: #0f172a;">${measurement.collaboratorName || "Profissional Responsável"}</div>
+          <div style="font-size: 12px; font-weight: 700; color: #0f172a;">${executorSignerName}</div>
           <div style="font-size: 11px; color: #64748b;">Executor da Medição</div>
         </div>
         <div>
+          <div style="height: 62px; margin-bottom: 6px;"></div>
           <div style="border-top: 1px solid #94a3b8; width: 80%; margin: 0 auto 8px auto;"></div>
           <div style="font-size: 12px; font-weight: 700; color: #0f172a;">${measurement.clientName || "Cliente / Fiscal da Obra"}</div>
           <div style="font-size: 11px; color: #64748b;">Aprovação / Conferência</div>
