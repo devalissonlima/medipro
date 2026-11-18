@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from "react"
 import { ChevronDown, ChevronRight, CalendarDays } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { groupMeasurementsByDate } from "@/utils/dateGrouping"
 import type { Measurement } from "@/types/measurement"
 
@@ -48,8 +49,10 @@ export const GroupedMeasurementsList: React.FC<GroupedMeasurementsListProps> = (
         return (
           <div key={group.id} className="space-y-2">
             {/* Cabeçalho Clicável Estilo Outlook */}
-            <button
+            <Button
               type="button"
+              variant="unstyled"
+              size="auto"
               onClick={() => toggleGroup(group.id)}
               aria-expanded={!isCollapsed}
               className="flex w-full items-center justify-between rounded-xl border border-slate-200/80 bg-slate-100/80 px-3.5 py-2.5 text-left transition-colors hover:bg-slate-200/60 hover:border-slate-300 group"
@@ -74,7 +77,7 @@ export const GroupedMeasurementsList: React.FC<GroupedMeasurementsListProps> = (
               >
                 {count} {count === 1 ? "medição" : "medições"}
               </Badge>
-            </button>
+            </Button>
 
             {/* Conteúdo do Grupo Expandido */}
             {!isCollapsed && (

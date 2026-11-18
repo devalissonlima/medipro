@@ -10,6 +10,7 @@ import {
 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { MeasurementStatusBadge } from "@/pages/measurements/components/MeasurementStatusBadge"
 import { MeasurementDetailView } from "./MeasurementDetailView"
 import type { Measurement } from "@/types/measurement"
@@ -59,12 +60,12 @@ export function MeasurementReviewRow({
         <div className="flex items-center gap-3 min-w-0 flex-1">
           {/* Checkbox de Seleção em Lote */}
           <div className="flex items-center pt-0.5 sm:pt-0">
-            <input
+            <Input
               type="checkbox"
               checked={isSelected}
               disabled={!isPending}
               onChange={() => onToggleSelect(measurement.id)}
-              className="h-4 w-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+              className="h-4 w-4 rounded border-slate-300 text-amber-600 focus-visible:ring-amber-500 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
               aria-label={`Selecionar medição ${measurement.title}`}
             />
           </div>

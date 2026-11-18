@@ -1,3 +1,5 @@
+import type { CatalogItemType } from "./catalog"
+
 export type MeasurementStatus =
   | "draft"
   | "pending"
@@ -46,6 +48,7 @@ export interface MeasurementServiceItem {
   id: string
   masterServiceId?: string
   serviceId: string
+  itemType?: CatalogItemType
   serviceName: string
   environment?: string
   materialName?: string
@@ -93,6 +96,8 @@ export interface Measurement {
   status: MeasurementStatus
   reworkNote?: string
   shareableUrlToken: string
+  signatureUrl?: string
+  signatureName?: string
   createdAt: string
   updatedAt?: string
 }

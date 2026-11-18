@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import { useSmartBack } from "@/hooks/useSmartBack"
 import {
@@ -14,12 +14,17 @@ import {
   Briefcase,
   Phone,
   Upload,
+  Palette,
+  PenTool,
+  Trash2,
+  AlertCircle,
 } from "lucide-react"
 
 import { useAuthStore } from "@/stores/authStore"
 import { toast } from "@/components/ui/use-toast"
 import { PageContainer } from "@/components/shared/PageContainer"
 import { PageHeader } from "@/components/shared/PageHeader"
+import { BrandIdentityFormTab } from "@/components/shared/BrandIdentityFormTab"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -39,10 +44,19 @@ export const ProfilePage: React.FC = () => {
   const goBack = useSmartBack("/")
   const { user, logout, updateProfile } = useAuthStore()
 
+  const isSolo = user?.role === "SOLO"
+  const [activeTab, setActiveTab] = useState<"account" | "branding">("account")
+
   const [name, setName] = useState(user?.name || "")
   const [avatarUrl, setAvatarUrl] = useState(user?.avatarUrl || "")
   const [specialty, setSpecialty] = useState(user?.specialty || "")
   const [phone, setPhone] = useState(user?.phone || "")
+  const [signatureUrl, setSignatureUrl] = useState(user?.signatureUrl || "")
+  const [signatureName, setSignatureName] = useState(user?.signatureName || "")
+  const [signatureError, setSignatureError] = useState<string | null>(null)
+
+  const signatureFileInputRef = useRef<HTMLInputElement>(null)
+  const signatureNameInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (user) {
@@ -50,6 +64,9 @@ export const ProfilePage: React.FC = () => {
       setAvatarUrl(user.avatarUrl || "")
       setSpecialty(user.specialty || "")
       setPhone(user.phone || "")
+      setSignatureUrl(user.signatureUrl || "")
+      setSignatureName(user.signatureName || "")
+      setSignatureError(null)
     }
   }, [user])
 
@@ -71,20 +88,91 @@ export const ProfilePage: React.FC = () => {
     }
   }
 
+  const handleSignatureUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ""
+    if (!file) return
+
+    const fileNameLower = file.name.toLowerCase()
+    const isPng = file.type === "image/png" || fileNameLower.endsWith(".png")
+    const isSvg =
+      file.type === "image/svg+xml" || fileNameLower.endsWith(".svg")
+
+    if (!isPng && !isSvg) {
+      setSignatureError("Formato inválido. Envie apenas imagem PNG ou SVG.")
+      toast({
+        title: "Formato não suportado",
+        description: "A assinatura digital deve estar no formato PNG ou SVG.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      setSignatureError("O arquivo da assinatura deve ter no máximo 2 MB.")
+      toast({
+        title: "Arquivo muito grande",
+        description: "Selecione uma imagem PNG ou SVG de até 2 MB.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      if (typeof reader.result === "string") {
+        setSignatureUrl(reader.result)
+        if (!signatureName.trim()) {
+          setSignatureError(
+            "Defina obrigatoriamente o nome que acompanhará sua assinatura."
+          )
+          setTimeout(() => signatureNameInputRef.current?.focus(), 50)
+        } else {
+          setSignatureError(null)
+        }
+      }
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleRemoveSignature = () => {
+    setSignatureUrl("")
+    setSignatureError(null)
+  }
+
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault()
     if (!name.trim()) return
 
+    if (signatureUrl && !signatureName.trim()) {
+      const msg =
+        "O nome na assinatura digital é obrigatório quando há uma assinatura configurada."
+      setSignatureError(msg)
+      signatureNameInputRef.current?.focus()
+      toast({
+        title: "Nome da assinatura obrigatório",
+        description: msg,
+        variant: "destructive",
+      })
+      return
+    }
+
+    setSignatureError(null)
     updateProfile({
       name: name.trim(),
       avatarUrl: avatarUrl.trim(),
       specialty: specialty.trim(),
       phone: phone.trim(),
+      signatureUrl: signatureUrl.trim() || undefined,
+      signatureName: signatureUrl.trim()
+        ? signatureName.trim()
+        : signatureName.trim() || undefined,
     })
 
     toast({
       title: "Perfil Atualizado",
-      description: "Suas alterações de perfil foram salvas com sucesso!",
+      description:
+        "Suas alterações de perfil e assinatura digital foram salvas com sucesso!",
       variant: "success",
     })
   }
@@ -124,7 +212,46 @@ export const ProfilePage: React.FC = () => {
         description="Gerencie seus dados de acesso, função no Medipro e encerramento de sessão."
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {isSolo && (
+        <div className="border-b border-slate-200">
+          <nav className="-mb-px flex space-x-6 overflow-x-auto">
+            <Button
+              type="button"
+              variant="unstyled"
+              size="auto"
+              onClick={() => setActiveTab("account")}
+              className={`flex items-center gap-2 py-3 px-1 border-b-2 font-semibold text-xs transition-colors shrink-0 ${
+                activeTab === "account"
+                  ? "border-amber-500 text-slate-900"
+                  : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
+              }`}
+            >
+              <UserIcon className="h-4 w-4 text-amber-500" />
+              <span>Dados Pessoais &amp; Conta</span>
+            </Button>
+
+            <Button
+              type="button"
+              variant="unstyled"
+              size="auto"
+              onClick={() => setActiveTab("branding")}
+              className={`flex items-center gap-2 py-3 px-1 border-b-2 font-semibold text-xs transition-colors shrink-0 ${
+                activeTab === "branding"
+                  ? "border-amber-500 text-slate-900"
+                  : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
+              }`}
+            >
+              <Palette className="h-4 w-4 text-amber-500" />
+              <span>Identidade Comercial (Papel Timbrado)</span>
+            </Button>
+          </nav>
+        </div>
+      )}
+
+      {isSolo && activeTab === "branding" ? (
+        <BrandIdentityFormTab />
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Formulário de Edição de Perfil (2 Colunas) */}
         <div className="lg:col-span-2 space-y-6">
           <Card className="border-slate-200/90 shadow-2xs bg-white">
@@ -150,7 +277,7 @@ export const ProfilePage: React.FC = () => {
                     >
                       <Camera className="h-5 w-5" />
                     </label>
-                    <input
+                    <Input
                       id="avatar-upload"
                       type="file"
                       accept="image/*"
@@ -174,9 +301,11 @@ export const ProfilePage: React.FC = () => {
                       </label>
 
                       {PRESET_AVATARS.map((preset, index) => (
-                        <button
+                        <Button
                           key={index}
                           type="button"
+                          variant="unstyled"
+                          size="auto"
                           onClick={() => setAvatarUrl(preset)}
                           className={`h-7 w-7 rounded-full overflow-hidden border-2 transition-all ${
                             avatarUrl === preset ? "border-amber-500 ring-2 ring-amber-500/20" : "border-slate-200 hover:border-slate-400"
@@ -184,7 +313,7 @@ export const ProfilePage: React.FC = () => {
                           title={`Selecionar avatar ${index + 1}`}
                         >
                           <img src={preset} alt={`Opção ${index + 1}`} className="h-full w-full object-cover" />
-                        </button>
+                        </Button>
                       ))}
                     </div>
                   </div>
@@ -232,6 +361,127 @@ export const ProfilePage: React.FC = () => {
                       placeholder="(11) 98765-4321"
                       className="h-10 text-xs"
                     />
+                  </div>
+                </div>
+
+                {/* Seção de Assinatura Digital (Todos os Perfis) */}
+                <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                      <h4 className="text-sm font-semibold text-slate-900 flex items-center gap-1.5">
+                        <PenTool className="h-4 w-4 text-amber-600" />
+                        Assinatura Digital (Orçamentos e Medições)
+                      </h4>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Envie sua assinatura em <strong>PNG ou SVG</strong> (preferencialmente com fundo transparente). Ela será inserida automaticamente na visualização e exportação em PDF.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
+                    {/* Preview da Assinatura */}
+                    <div className="sm:col-span-5">
+                      <div className="h-28 rounded-xl border border-dashed border-slate-300 bg-white flex flex-col items-center justify-center p-3 overflow-hidden relative">
+                        {signatureUrl ? (
+                          <img
+                            src={signatureUrl}
+                            alt={
+                              signatureName
+                                ? `Assinatura de ${signatureName}`
+                                : "Assinatura digital"
+                            }
+                            className="max-h-20 max-w-full object-contain"
+                          />
+                        ) : (
+                          <div className="text-center space-y-1">
+                            <PenTool className="h-5 w-5 text-slate-300 mx-auto" />
+                            <span className="text-[11px] font-medium text-slate-400 block">
+                              Nenhuma assinatura enviada
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Controles e Nome Obrigatório */}
+                    <div className="sm:col-span-7 space-y-3">
+                      <Input
+                        ref={signatureFileInputRef}
+                        id="signature-upload"
+                        type="file"
+                        accept=".png,.svg,image/png,image/svg+xml"
+                        onChange={handleSignatureUpload}
+                        className="hidden"
+                      />
+
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => signatureFileInputRef.current?.click()}
+                          className="h-9 text-xs font-semibold gap-1.5 bg-white border-slate-300"
+                        >
+                          <Upload className="h-3.5 w-3.5 text-amber-600" />
+                          <span>
+                            {signatureUrl
+                              ? "Trocar Assinatura (PNG/SVG)"
+                              : "Enviar Assinatura (PNG/SVG)"}
+                          </span>
+                        </Button>
+
+                        {signatureUrl && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleRemoveSignature}
+                            className="h-9 text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 gap-1"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                            <span>Remover</span>
+                          </Button>
+                        )}
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label
+                          htmlFor="signature-name"
+                          className="text-xs font-semibold text-slate-700 flex items-center gap-1"
+                        >
+                          <span>Nome na Assinatura Digital</span>
+                          <span className="text-rose-500">*</span>
+                        </label>
+                        <Input
+                          ref={signatureNameInputRef}
+                          id="signature-name"
+                          value={signatureName}
+                          onChange={(e) => {
+                            setSignatureName(e.target.value)
+                            if (signatureError && e.target.value.trim()) {
+                              setSignatureError(null)
+                            }
+                          }}
+                          placeholder="Ex: Eng. Carlos Mendes — CREA 12345"
+                          required={Boolean(signatureUrl)}
+                          className={`h-10 text-xs bg-white ${
+                            signatureError
+                              ? "border-rose-400 focus-visible:ring-rose-500"
+                              : ""
+                          }`}
+                        />
+                        {signatureError ? (
+                          <p className="text-[11px] font-medium text-rose-600 flex items-center gap-1">
+                            <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                            <span>{signatureError}</span>
+                          </p>
+                        ) : (
+                          <p className="text-[11px] text-slate-500">
+                            Obrigatório quando houver assinatura: aparece logo abaixo do traço nos orçamentos, medições e PDFs.
+                          </p>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -338,6 +588,7 @@ export const ProfilePage: React.FC = () => {
           </Card>
         </div>
       </div>
+      )}
     </PageContainer>
   )
 }

@@ -11,7 +11,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import type { ServiceItem, ServiceCategory } from "@/types/service"
-import { SERVICE_UNIT_LABELS } from "@/types/service"
+import { CATALOG_ITEM_TYPE_BADGES, SERVICE_UNIT_LABELS } from "@/types/service"
 
 interface ServiceTableProps {
   services: ServiceItem[]
@@ -25,6 +25,8 @@ const CATEGORY_COLORS: Record<ServiceCategory, { bg: string; text: string; borde
   Acabamento: { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200" },
   Furação: { bg: "bg-purple-50", text: "text-purple-700", border: "border-purple-200" },
   Instalação: { bg: "bg-indigo-50", text: "text-indigo-700", border: "border-indigo-200" },
+  Materiais: { bg: "bg-amber-50", text: "text-amber-800", border: "border-amber-200" },
+  "Equipe Auxiliar": { bg: "bg-purple-50", text: "text-purple-800", border: "border-purple-200" },
   Outros: { bg: "bg-slate-50", text: "text-slate-700", border: "border-slate-200" },
 }
 
@@ -67,6 +69,7 @@ export function ServiceTable({ services, onEdit, onDelete }: ServiceTableProps) 
           {services.map((service) => {
             const categoryStyle =
               CATEGORY_COLORS[service.category] || CATEGORY_COLORS.Outros
+            const typeBadge = CATALOG_ITEM_TYPE_BADGES[service.itemType || "labor"]
 
             return (
               <TableRow
@@ -76,10 +79,16 @@ export function ServiceTable({ services, onEdit, onDelete }: ServiceTableProps) 
                 {/* Nome & Descrição */}
                 <TableCell className="py-3.5">
                   <div className="space-y-0.5">
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <span className="font-bold text-slate-900 text-sm">
                         {service.name}
                       </span>
+                      <Badge
+                        variant="outline"
+                        className={`${typeBadge.className} text-[10px] font-semibold`}
+                      >
+                        {typeBadge.label}
+                      </Badge>
                     </div>
                     {service.description && (
                       <p className="text-xs text-slate-500 line-clamp-1 max-w-md">

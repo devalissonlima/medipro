@@ -46,13 +46,16 @@ export function ClientFilters({
           className="pl-9 pr-8 h-9 text-xs bg-slate-50/50 focus:bg-white"
         />
         {searchQuery && (
-          <button
+          <Button
+            type="button"
+            variant="unstyled"
+            size="auto"
             onClick={() => onSearchChange("")}
             className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600"
             aria-label="Limpar busca"
           >
             <X className="h-4 w-4" />
-          </button>
+          </Button>
         )}
       </div>
 
@@ -63,9 +66,11 @@ export function ClientFilters({
             const isSelected = typeFilter === opt.value
             const count = typeCounts[opt.value] || 0
             return (
-              <button
+              <Button
                 key={opt.value}
                 type="button"
+                variant="unstyled"
+                size="auto"
                 onClick={() => onTypeChange(opt.value)}
                 className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-all ${
                   isSelected
@@ -83,7 +88,7 @@ export function ClientFilters({
                 >
                   {count}
                 </span>
-              </button>
+              </Button>
             )
           })}
         </div>
@@ -102,8 +107,10 @@ export function ClientFilters({
 
           {/* Alternador Grid / Tabela */}
           <div className="flex items-center rounded-lg border border-slate-200 bg-white p-0.5 shadow-2xs">
-            <button
+            <Button
               type="button"
+              variant="unstyled"
+              size="auto"
               onClick={() => onViewModeChange("grid")}
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
                 viewMode === "grid"
@@ -114,9 +121,11 @@ export function ClientFilters({
             >
               <LayoutGrid className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Cards</span>
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant="unstyled"
+              size="auto"
               onClick={() => onViewModeChange("table")}
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
                 viewMode === "table"
@@ -127,7 +136,7 @@ export function ClientFilters({
             >
               <List className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Tabela</span>
-            </button>
+            </Button>
           </div>
         </div>
       </div>

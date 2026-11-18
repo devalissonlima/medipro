@@ -8,6 +8,7 @@ import {
   ArrowUpRight,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { useAuthStore } from "@/stores/authStore"
 import { useRecentAccessStore } from "@/stores/recentAccessStore"
 import { useProjectsStore } from "@/stores/projectsStore"
@@ -70,9 +71,11 @@ export const RecentAccessSection: React.FC = () => {
                 "Cliente"
 
               return (
-                <button
+                <Button
                   key={project.id}
                   type="button"
+                  variant="unstyled"
+                  size="auto"
                   onClick={() => navigate(getProjectUrl(project, "dashboard"))}
                   className="group flex flex-col justify-between rounded-xl border border-slate-200/90 bg-white p-3.5 text-left shadow-2xs transition-all hover:border-amber-400 hover:shadow-sm"
                 >
@@ -101,7 +104,7 @@ export const RecentAccessSection: React.FC = () => {
                     </span>
                     <ArrowUpRight className="h-3.5 w-3.5 text-slate-400 group-hover:text-amber-600 shrink-0 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                   </div>
-                </button>
+                </Button>
               )
             })}
           </div>
@@ -120,9 +123,11 @@ export const RecentAccessSection: React.FC = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {recentMeasurements.map((measurement) => (
-              <button
+              <Button
                 key={measurement.id}
                 type="button"
+                variant="unstyled"
+                size="auto"
                 onClick={() => navigate(`/medicoes/${measurement.id}`)}
                 className="group flex flex-col justify-between rounded-xl border border-slate-200/90 bg-white p-3.5 text-left shadow-2xs transition-all hover:border-amber-400 hover:shadow-sm"
               >
@@ -150,7 +155,7 @@ export const RecentAccessSection: React.FC = () => {
                   </span>
                   <ArrowUpRight className="h-3.5 w-3.5 text-slate-400 group-hover:text-amber-600 shrink-0 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                 </div>
-              </button>
+              </Button>
             ))}
           </div>
         </div>

@@ -47,14 +47,8 @@ export function useClients() {
 
       return {
         ...client,
-        totalMeasurementsCount: Math.max(
-          client.totalMeasurementsCount || 0,
-          totalMeasurementsCount
-        ),
-        totalBilledAmount: Math.max(
-          client.totalBilledAmount || 0,
-          totalBilledAmount
-        ),
+        totalMeasurementsCount,
+        totalBilledAmount,
       }
     })
   }, [clients, measurements])
@@ -82,7 +76,7 @@ export function useClients() {
     return {
       totalClients: clients.length,
       totalBilled: Math.round(totalBilled * 100) / 100,
-      activeClientsInMonth: activeClientsSet.size || Math.min(clients.length, 3),
+      activeClientsInMonth: activeClientsSet.size,
     }
   }, [clients, measurements])
 

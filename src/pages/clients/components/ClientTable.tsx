@@ -99,13 +99,15 @@ export function ClientTable({
                 {/* Nome & Empresa */}
                 <TableCell className="py-3.5">
                   <div className="space-y-0.5">
-                    <button
+                    <Button
                       type="button"
+                      variant="unstyled"
+                      size="auto"
                       onClick={() => onOpenHistory(client)}
                       className="font-bold text-slate-900 text-sm hover:text-amber-800 transition-colors text-left"
                     >
                       {client.name}
-                    </button>
+                    </Button>
                     {client.companyName && (
                       <p className="text-xs text-slate-500 flex items-center gap-1">
                         <Building2 className="h-3 w-3 text-slate-400 shrink-0" />

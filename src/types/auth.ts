@@ -12,6 +12,8 @@ export interface User {
   specialty?: string
   phone?: string
   plano?: UserPlan
+  signatureUrl?: string
+  signatureName?: string
 }
 
 export interface AuthCredentials {
@@ -21,11 +23,19 @@ export interface AuthCredentials {
 
 export interface AuthState {
   user: User | null
+  customUsersByRole?: Partial<Record<UserRole, User>>
   isAuthenticated: boolean
   isLoading: boolean
   error: string | null
   login: (credentials: AuthCredentials) => Promise<boolean>
   loginAsMockRole: (role: Exclude<UserRole, "MASTER">) => void
-  updateProfile: (data: Partial<Pick<User, "name" | "avatarUrl" | "specialty" | "phone">>) => void
+  updateProfile: (
+    data: Partial<
+      Pick<
+        User,
+        "name" | "avatarUrl" | "specialty" | "phone" | "signatureUrl" | "signatureName"
+      >
+    >
+  ) => void
   logout: () => void
 }

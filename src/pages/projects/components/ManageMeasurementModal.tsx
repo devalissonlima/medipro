@@ -132,8 +132,10 @@ export function ManageMeasurementModal({
 
             <div className="grid grid-cols-3 gap-2">
               {/* Opção Aprovar */}
-              <button
+              <Button
                 type="button"
+                variant="unstyled"
+                size="auto"
                 onClick={() => {
                   setSelectedAction("approve")
                   setError(null)
@@ -152,11 +154,13 @@ export function ManageMeasurementModal({
                   }`}
                 />
                 <span className="text-xs font-bold">Aprovar</span>
-              </button>
+              </Button>
 
               {/* Opção Pedir Ajuste */}
-              <button
+              <Button
                 type="button"
+                variant="unstyled"
+                size="auto"
                 onClick={() => {
                   setSelectedAction("rework")
                   setError(null)
@@ -175,11 +179,13 @@ export function ManageMeasurementModal({
                   }`}
                 />
                 <span className="text-xs font-bold">Pedir Ajuste</span>
-              </button>
+              </Button>
 
               {/* Opção Rejeitar */}
-              <button
+              <Button
                 type="button"
+                variant="unstyled"
+                size="auto"
                 onClick={() => {
                   setSelectedAction("reject")
                   setError(null)
@@ -198,7 +204,7 @@ export function ManageMeasurementModal({
                   }`}
                 />
                 <span className="text-xs font-bold">Rejeitar</span>
-              </button>
+              </Button>
             </div>
           </div>
 

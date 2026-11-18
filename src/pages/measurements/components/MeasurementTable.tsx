@@ -106,14 +106,16 @@ export function MeasurementTable({
                     {/* Título & Localização com hover:underline */}
                     <TableCell className="py-3.5">
                       <div className="space-y-0.5">
-                        <button
+                        <Button
                           type="button"
+                          variant="unstyled"
+                          size="auto"
                           onClick={() => navigate(`/medicoes/${measurement.id}`)}
                           className="font-bold text-slate-900 text-sm hover:text-amber-800 hover:underline transition-colors text-left"
                           title="Ver detalhes da medição"
                         >
                           {measurement.title}
-                        </button>
+                        </Button>
                         {measurement.location && (
                           <p className="text-xs text-slate-500 line-clamp-1">
                             {measurement.location}

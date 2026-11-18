@@ -76,8 +76,10 @@ export function ClientSelector({
           Destinatário da Medição <span className="text-rose-500">*</span>
         </label>
         <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg text-[11px] font-medium">
-          <button
+          <Button
             type="button"
+            variant="unstyled"
+            size="auto"
             onClick={() => onToggleTeamContext(false)}
             className={`px-2.5 py-1 rounded-md transition-colors ${
               !isTeamContext
@@ -86,9 +88,11 @@ export function ClientSelector({
             }`}
           >
             Cliente / Obra Direta
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="unstyled"
+            size="auto"
             onClick={() => onToggleTeamContext(true)}
             className={`px-2.5 py-1 rounded-md transition-colors ${
               isTeamContext
@@ -97,7 +101,7 @@ export function ClientSelector({
             }`}
           >
             Liderança da Equipe
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -150,9 +154,11 @@ export function ClientSelector({
                 filteredClients.map((client) => {
                   const isSelected = client.id === clientId
                   return (
-                    <button
+                    <Button
                       key={client.id}
                       type="button"
+                      variant="unstyled"
+                      size="auto"
                       onClick={() => handleSelect(client.id, client.name)}
                       className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs transition-colors ${
                         isSelected
@@ -180,7 +186,7 @@ export function ClientSelector({
                       {isSelected && (
                         <Check className="h-4 w-4 text-amber-600 shrink-0 ml-2" />
                       )}
-                    </button>
+                    </Button>
                   )
                 })
               ) : (
@@ -224,14 +230,16 @@ export function ClientSelector({
                     </div>
                   </div>
                 ) : (
-                  <button
+                  <Button
                     type="button"
+                    variant="unstyled"
+                    size="auto"
                     onClick={() => setShowQuickCreate(true)}
                     className="flex w-full items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-semibold text-amber-800 bg-amber-50 hover:bg-amber-100/80 transition-colors"
                   >
                     <Plus className="h-3.5 w-3.5" />
                     Cadastrar "{searchTerm || "Novo Cliente"}" na hora
-                  </button>
+                  </Button>
                 )}
               </div>
             </div>

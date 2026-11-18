@@ -13,8 +13,8 @@ const INITIAL_MEMBERS: TeamMember[] = [
     avatarUrl:
       "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
     baseRate: 150.0,
-    monthlyMeasurementsCount: 6,
-    monthlyTotalBilled: 7133.5,
+    monthlyMeasurementsCount: 0,
+    monthlyTotalBilled: 0,
     createdAt: "2026-10-01T10:00:00Z",
     lastActive: "Hoje às 14:32",
   },
@@ -28,8 +28,8 @@ const INITIAL_MEMBERS: TeamMember[] = [
     avatarUrl:
       "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
     baseRate: 120.0,
-    monthlyMeasurementsCount: 4,
-    monthlyTotalBilled: 4430.0,
+    monthlyMeasurementsCount: 0,
+    monthlyTotalBilled: 0,
     createdAt: "2026-10-15T09:30:00Z",
     lastActive: "Ontem às 18:20",
   },
@@ -43,8 +43,8 @@ const INITIAL_MEMBERS: TeamMember[] = [
     avatarUrl:
       "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=150&auto=format&fit=crop&q=80",
     baseRate: 130.0,
-    monthlyMeasurementsCount: 5,
-    monthlyTotalBilled: 5261.0,
+    monthlyMeasurementsCount: 0,
+    monthlyTotalBilled: 0,
     createdAt: "2026-10-20T11:00:00Z",
     lastActive: "Hoje às 11:15",
   },
@@ -58,8 +58,8 @@ const INITIAL_MEMBERS: TeamMember[] = [
     avatarUrl:
       "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80",
     baseRate: 140.0,
-    monthlyMeasurementsCount: 1,
-    monthlyTotalBilled: 608.0,
+    monthlyMeasurementsCount: 0,
+    monthlyTotalBilled: 0,
     createdAt: "2026-11-04T16:00:00Z",
     lastActive: "Aguardando ativação",
   },
@@ -247,7 +247,7 @@ export const useTeamStore = create<TeamState>()(
       setNotification: (notification) => set({ notification }),
     }),
     {
-      name: "@medipro:team-data",
+      name: "@medipro:team-data-v2",
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         members: state.members,

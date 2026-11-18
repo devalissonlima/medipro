@@ -168,12 +168,13 @@ export function useServiceImportWizard({
       .filter((s) => !skippedIds.has(s.id) && finalPrices[s.id] && finalPrices[s.id] > 0)
       .map((s) => ({
         masterServiceId: s.id,
+        itemType: s.itemType || "labor",
         name: s.name,
         category: (s.category || "Outros") as ServiceCategory,
         unit: s.defaultUnit as ServiceUnit,
         basePrice: finalPrices[s.id],
         complexityTags: ["Padrão"],
-        description: `Serviço padronizado importado do Catálogo da Empresa (${s.name}).`,
+        description: `Item padronizado importado do Catálogo da Empresa (${s.name}).`,
       }))
 
     if (itemsToImport.length > 0) {

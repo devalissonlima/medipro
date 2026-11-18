@@ -5,6 +5,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import {
   ArrowRight,
@@ -136,7 +137,7 @@ export function ServicePricingWizardModal({
               <span className="text-2xl sm:text-3xl font-bold font-mono text-slate-400 group-focus-within:text-amber-600 select-none transition-colors">
                 R$
               </span>
-              <input
+              <Input
                 id="hero-price-input"
                 ref={inputRef}
                 type="text"
@@ -146,7 +147,7 @@ export function ServicePricingWizardModal({
                 value={inputVal}
                 onChange={(e) => handleInputChange(e.target.value)}
                 onKeyDown={handleKeyDown}
-                className="w-full text-3xl sm:text-4xl font-black font-mono text-slate-900 bg-transparent outline-none tracking-tight placeholder:text-slate-300"
+                className="h-auto border-0 shadow-none bg-transparent p-0 focus-visible:ring-0 focus-visible:border-0 text-3xl sm:text-4xl font-black font-mono text-slate-900 tracking-tight placeholder:text-slate-300"
               />
             </div>
 

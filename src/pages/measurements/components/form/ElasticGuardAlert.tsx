@@ -1,6 +1,7 @@
 import React, { useRef } from "react"
 import { AlertTriangle, CheckCircle2, Camera, X } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
 import { Select } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
@@ -188,7 +189,7 @@ export const ElasticGuardAlert: React.FC<ElasticGuardAlertProps> = ({
               )}
             </label>
 
-            <input
+            <Input
               type="file"
               accept="image/*"
               ref={fileInputRef}
@@ -204,14 +205,16 @@ export const ElasticGuardAlert: React.FC<ElasticGuardAlertProps> = ({
                   className="h-24 w-36 object-cover"
                 />
                 {!isReadOnly && (
-                  <button
+                  <Button
                     type="button"
+                    variant="unstyled"
+                    size="auto"
                     onClick={() => onUpdateAuditField("evidencePhotoUrl", undefined)}
                     className="absolute top-1 right-1 p-1 rounded-full bg-slate-900/80 text-white hover:bg-rose-600 transition-colors"
                     title="Remover foto"
                   >
                     <X className="h-3 w-3" />
-                  </button>
+                  </Button>
                 )}
               </div>
             ) : (

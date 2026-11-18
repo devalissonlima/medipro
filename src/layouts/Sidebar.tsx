@@ -4,6 +4,7 @@ import { HardHat, ChevronRight, Settings } from "lucide-react"
 import { useAuthStore } from "@/stores/authStore"
 import { getAuthorizedNavItems } from "@/config/navigation"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
 interface SidebarProps {
@@ -131,8 +132,10 @@ export function Sidebar({ onNavigate, className }: SidebarProps) {
 
       {/* Rodapé da Sidebar: Perfil Limpo (Foto e Login, clicável para página do usuário) */}
       <div className="p-3 border-t border-slate-800/80 bg-slate-950/60">
-        <button
+        <Button
           type="button"
+          variant="unstyled"
+          size="auto"
           onClick={handleProfileClick}
           className="group flex w-full items-center gap-3 rounded-xl p-2.5 text-left border border-transparent transition-colors duration-150 hover:bg-slate-800/70 hover:border-slate-800/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-amber-500/30"
           title="Ver perfil e opções da conta"
@@ -152,7 +155,7 @@ export function Sidebar({ onNavigate, className }: SidebarProps) {
           </div>
 
           <ChevronRight className="h-4 w-4 shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-slate-200" />
-        </button>
+        </Button>
       </div>
     </aside>
   )

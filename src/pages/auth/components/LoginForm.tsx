@@ -160,9 +160,11 @@ export function LoginForm() {
             {MOCK_PROFILE_BUTTONS.map((profile) => {
               const Icon = profile.icon
               return (
-                <button
+                <Button
                   key={profile.role}
                   type="button"
+                  variant="unstyled"
+                  size="auto"
                   onClick={() => handleMockLogin(profile.role)}
                   className="group flex items-start gap-2.5 rounded-xl border border-slate-200 bg-slate-50/70 p-3 text-left transition-colors hover:border-amber-400 hover:bg-amber-50/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
                 >
@@ -179,7 +181,7 @@ export function LoginForm() {
                       {profile.subtitle}
                     </p>
                   </div>
-                </button>
+                </Button>
               )
             })}
           </div>

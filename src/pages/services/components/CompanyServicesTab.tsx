@@ -14,6 +14,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { useMasterCatalogStore } from "@/stores/masterCatalogStore"
 import { useServicesStore } from "@/stores/servicesStore"
 import {
+  CATALOG_ITEM_TYPE_BADGES,
   MASTER_SERVICE_UNIT_LABELS,
   type MasterServiceType,
 } from "@/types/catalog"
@@ -188,9 +189,11 @@ export function CompanyServicesTab({ onStartWizard }: CompanyServicesTabProps) {
               <Filter className="h-3 w-3" /> Categoria:
             </span>
             {categories.map((cat) => (
-              <button
+              <Button
                 key={cat}
                 type="button"
+                variant="unstyled"
+                size="auto"
                 onClick={() => setSelectedCategory(cat)}
                 className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors ${
                   selectedCategory === cat
@@ -199,7 +202,7 @@ export function CompanyServicesTab({ onStartWizard }: CompanyServicesTabProps) {
                 }`}
               >
                 {cat}
-              </button>
+              </Button>
             ))}
           </div>
 
@@ -239,14 +242,16 @@ export function CompanyServicesTab({ onStartWizard }: CompanyServicesTabProps) {
             <thead className="bg-slate-50/90 border-b border-slate-200 text-slate-600 font-semibold">
               <tr>
                 <th className="p-3.5 w-10 text-center">
-                  <input
-                    type="checkbox"
-                    checked={isAllAvailableSelected}
-                    disabled={availableFiltered.length === 0}
-                    onChange={handleToggleSelectAll}
-                    className="h-4 w-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-                    title="Selecionar todos os serviços disponíveis"
-                  />
+                  <div className="flex justify-center">
+                    <Input
+                      type="checkbox"
+                      checked={isAllAvailableSelected}
+                      disabled={availableFiltered.length === 0}
+                      onChange={handleToggleSelectAll}
+                      className="h-4 w-4 rounded border-slate-300 text-amber-600 focus-visible:ring-amber-500 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                      title="Selecionar todos os serviços disponíveis"
+                    />
+                  </div>
                 </th>
                 <th className="p-3.5">Nome do Serviço Padronizado</th>
                 <th className="p-3.5">Categoria</th>
@@ -272,19 +277,31 @@ export function CompanyServicesTab({ onStartWizard }: CompanyServicesTabProps) {
                   >
                     {/* Checkbox */}
                     <td className="p-3.5 text-center">
-                      <input
-                        type="checkbox"
-                        checked={isChecked}
-                        disabled={alreadyIn}
-                        onChange={() => handleToggleItem(service.id)}
-                        className="h-4 w-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-                      />
+                      <div className="flex justify-center">
+                        <Input
+                          type="checkbox"
+                          checked={isChecked}
+                          disabled={alreadyIn}
+                          onChange={() => handleToggleItem(service.id)}
+                          className="h-4 w-4 rounded border-slate-300 text-amber-600 focus-visible:ring-amber-500 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                        />
+                      </div>
                     </td>
 
                     {/* Nome do Serviço */}
                     <td className="p-3.5">
-                      <div className="font-semibold text-slate-900 text-xs">
-                        {service.name}
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-semibold text-slate-900 text-xs">
+                          {service.name}
+                        </span>
+                        <Badge
+                          variant="outline"
+                          className={`text-[10px] font-semibold ${
+                            CATALOG_ITEM_TYPE_BADGES[service.itemType || "labor"].className
+                          }`}
+                        >
+                          {CATALOG_ITEM_TYPE_BADGES[service.itemType || "labor"].label}
+                        </Badge>
                       </div>
                       <span className="text-[10px] text-slate-400 font-mono">
                         #{service.id}

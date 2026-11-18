@@ -15,6 +15,9 @@ import { ClientsPage } from "@/pages/clients/ClientsPage"
 import { PlanPage } from "@/pages/plan/PlanPage"
 import { ProfilePage } from "@/pages/profile/ProfilePage"
 import { SettingsPage } from "@/pages/settings/SettingsPage"
+import { BudgetsPage } from "@/pages/budgets/BudgetsPage"
+import { BudgetFormPage } from "@/pages/budgets/BudgetFormPage"
+import { BudgetDetailPage } from "@/pages/budgets/BudgetDetailPage"
 import { Toaster } from "@/components/ui/toaster"
 import { NavigationHistoryTracker } from "@/components/shared/NavigationHistoryTracker"
 
@@ -23,8 +26,9 @@ export default function App() {
     <HashRouter>
       <NavigationHistoryTracker />
       <Routes>
-        {/* Rota Pública de Autenticação */}
+        {/* Rotas Públicas */}
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/proposta/:id" element={<BudgetDetailPage isPublicView />} />
 
         {/* Rotas Protegidas dentro do AppLayout */}
         <Route element={<ProtectedRoute />}>
@@ -32,6 +36,7 @@ export default function App() {
             {/* Rotas comuns a todos os perfis autenticados */}
             <Route path="/" element={<HomePage />} />
             <Route path="/perfil" element={<ProfilePage />} />
+            <Route path="/minha-conta" element={<ProfilePage />} />
             <Route path="/usuario" element={<Navigate to="/perfil" replace />} />
 
             {/* Dashboard Geral: Exclusiva de MANAGER (e MASTER) */}
@@ -76,6 +81,7 @@ export default function App() {
               <Route path="/projetos/:id/visao-geral" element={<Navigate to="../dashboard" replace />} />
               <Route path="/projetos/:id/dashboard" element={<ProjectDetailPage />} />
               <Route path="/projetos/:id/medicoes" element={<ProjectDetailPage />} />
+              <Route path="/projetos/:id/orcamentos" element={<ProjectDetailPage />} />
               <Route path="/projetos/:id/equipe" element={<ProjectDetailPage />} />
 
               {/* Rotas de Projeto dentro de Pasta: /projetos/:folderId/:id/* */}
@@ -83,7 +89,22 @@ export default function App() {
               <Route path="/projetos/:folderId/:id/visao-geral" element={<Navigate to="../dashboard" replace />} />
               <Route path="/projetos/:folderId/:id/dashboard" element={<ProjectDetailPage />} />
               <Route path="/projetos/:folderId/:id/medicoes" element={<ProjectDetailPage />} />
+              <Route path="/projetos/:folderId/:id/orcamentos" element={<ProjectDetailPage />} />
               <Route path="/projetos/:folderId/:id/equipe" element={<ProjectDetailPage />} />
+            </Route>
+
+            {/* Orçamentos: MANAGER, PROJECT_SUPERVISOR, SOLO e MASTER */}
+            <Route
+              element={
+                <ProtectedRoute
+                  allowedRoles={["MASTER", "MANAGER", "PROJECT_SUPERVISOR", "SOLO"]}
+                />
+              }
+            >
+              <Route path="/orcamentos" element={<BudgetsPage />} />
+              <Route path="/orcamentos/novo" element={<BudgetFormPage />} />
+              <Route path="/orcamentos/:id" element={<BudgetDetailPage />} />
+              <Route path="/orcamentos/:id/editar" element={<BudgetFormPage />} />
             </Route>
 
             {/* Clientes: MANAGER, PROJECT_SUPERVISOR, SOLO e MASTER */}

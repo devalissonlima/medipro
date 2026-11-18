@@ -6,6 +6,7 @@ import {
   Briefcase,
   Building2,
   CreditCard,
+  ReceiptText,
 } from "lucide-react"
 import type { NavItem } from "@/types/navigation"
 import type { UserRole } from "@/types/auth"
@@ -19,11 +20,11 @@ export const NAVIGATION_ITEMS: NavItem[] = [
     allowedRoles: ["MASTER", "MANAGER", "PROJECT_SUPERVISOR", "MEMBER", "SOLO"],
   },
   {
-    title: "Dashboard",
-    href: "/dashboard",
-    icon: TrendingUp,
-    description: "Indicadores financeiros e aprovação",
-    allowedRoles: ["MASTER", "MANAGER"],
+    title: "Clientes",
+    href: "/clientes",
+    icon: Building2,
+    description: "Obras, construtoras e clientes",
+    allowedRoles: ["MASTER", "MANAGER", "PROJECT_SUPERVISOR", "SOLO"],
   },
   {
     title: "Serviços",
@@ -33,11 +34,11 @@ export const NAVIGATION_ITEMS: NavItem[] = [
     allowedRoles: ["MASTER", "MEMBER", "SOLO"],
   },
   {
-    title: "Medições",
-    href: "/medicoes",
-    icon: File,
-    description: "Lançamento de áreas e volumes",
-    allowedRoles: ["MASTER", "MEMBER", "SOLO"],
+    title: "Orçamentos",
+    href: "/orcamentos",
+    icon: ReceiptText,
+    description: "Propostas timbradas e aditivos de obra",
+    allowedRoles: ["MASTER", "MANAGER", "PROJECT_SUPERVISOR", "SOLO"],
   },
   {
     title: "Projetos",
@@ -47,11 +48,18 @@ export const NAVIGATION_ITEMS: NavItem[] = [
     allowedRoles: ["MASTER", "MANAGER", "PROJECT_SUPERVISOR", "MEMBER", "SOLO"],
   },
   {
-    title: "Meus Clientes",
-    href: "/clientes",
-    icon: Building2,
-    description: "Obras, construtoras e clientes",
-    allowedRoles: ["MASTER", "MANAGER", "PROJECT_SUPERVISOR", "SOLO"],
+    title: "Medições",
+    href: "/medicoes",
+    icon: File,
+    description: "Lançamento de áreas e volumes",
+    allowedRoles: ["MASTER", "MEMBER", "SOLO"],
+  },
+  {
+    title: "Dashboard",
+    href: "/dashboard",
+    icon: TrendingUp,
+    description: "Indicadores financeiros e aprovação",
+    allowedRoles: ["MASTER", "MANAGER"],
   },
   {
     title: "Meu plano",

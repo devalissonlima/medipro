@@ -7,6 +7,7 @@ import {
   Utensils,
   Wrench,
 } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
@@ -31,8 +32,10 @@ export function OperationalCostsCard({
   return (
     <div className="rounded-xl border border-slate-200/90 bg-white overflow-hidden shadow-xs transition-all">
       {/* Header Interativo / Accordion Trigger */}
-      <button
+      <Button
         type="button"
+        variant="unstyled"
+        size="auto"
         onClick={() => setIsOpen(!isOpen)}
         className="flex w-full items-center justify-between p-4 sm:p-5 text-left hover:bg-slate-50/80 transition-colors"
       >
@@ -67,7 +70,7 @@ export function OperationalCostsCard({
             <ChevronDown className="h-4 w-4" />
           )}
         </div>
-      </button>
+      </Button>
 
       {/* Conteúdo Expandido */}
       {isOpen && (

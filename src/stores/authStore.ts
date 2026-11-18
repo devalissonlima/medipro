@@ -4,6 +4,12 @@ import type { AuthCredentials, AuthState, User, UserRole } from "@/types/auth"
 import { useProjectsStore } from "./projectsStore"
 import { useMeasurementsStore } from "./measurementsStore"
 
+function createMockSignatureSvg(signerLabel: string): string {
+  const safeLabel = signerLabel.replace(/[<>&"']/g, "")
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 76" width="280" height="76"><path d="M18 50 C34 18, 48 14, 52 42 C56 58, 70 22, 88 28 C100 32, 94 50, 110 44 C124 39, 136 20, 150 36 C160 47, 178 24, 200 32 C216 38, 234 26, 258 30" fill="none" stroke="#0f172a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M24 58 Q138 46 252 53" fill="none" stroke="#1e293b" stroke-width="1.2" stroke-linecap="round" opacity="0.65"/><text x="140" y="70" text-anchor="middle" font-family="Georgia, serif" font-style="italic" font-size="10.5" fill="#475569">${safeLabel}</text></svg>`
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`
+}
+
 export const MOCK_USERS_BY_ROLE: Record<Exclude<UserRole, "MASTER">, User> = {
   MANAGER: {
     id: "usr_manager_001",
@@ -14,6 +20,8 @@ export const MOCK_USERS_BY_ROLE: Record<Exclude<UserRole, "MASTER">, User> = {
     role: "MANAGER",
     tenantId: "tenant_01",
     plano: "Plano Pro",
+    signatureName: "Carlos Mendes",
+    signatureUrl: createMockSignatureSvg("Carlos Mendes"),
   },
   PROJECT_SUPERVISOR: {
     id: "usr_supervisor_001",
@@ -24,6 +32,8 @@ export const MOCK_USERS_BY_ROLE: Record<Exclude<UserRole, "MASTER">, User> = {
     role: "PROJECT_SUPERVISOR",
     tenantId: "tenant_01",
     plano: "Plano Pro",
+    signatureName: "Marcos Oliveira",
+    signatureUrl: createMockSignatureSvg("Marcos Oliveira"),
   },
   MEMBER: {
     id: "usr_member_001",
@@ -34,6 +44,8 @@ export const MOCK_USERS_BY_ROLE: Record<Exclude<UserRole, "MASTER">, User> = {
     role: "MEMBER",
     tenantId: "tenant_01",
     plano: "Plano Pro",
+    signatureName: "Lucas Ferraz",
+    signatureUrl: createMockSignatureSvg("Lucas Ferraz"),
   },
   SOLO: {
     id: "usr_solo_001",
@@ -44,6 +56,8 @@ export const MOCK_USERS_BY_ROLE: Record<Exclude<UserRole, "MASTER">, User> = {
     role: "SOLO",
     tenantId: "tenant_solo_01",
     plano: "Plano Básico",
+    signatureName: "João Autônomo",
+    signatureUrl: createMockSignatureSvg("João Autônomo"),
   },
 }
 
@@ -51,8 +65,9 @@ const DEFAULT_MOCK_USER = MOCK_USERS_BY_ROLE.MANAGER
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
+      customUsersByRole: {},
       isAuthenticated: false,
       isLoading: false,
       error: null,
@@ -70,10 +85,16 @@ export const useAuthStore = create<AuthState>()(
                 .replace(/\b\w/g, (l) => l.toUpperCase())
             : DEFAULT_MOCK_USER.name
 
+          const savedManager = get().customUsersByRole?.MANAGER
+          const baseUser = savedManager || DEFAULT_MOCK_USER
+          const resolvedName = savedManager?.name || extractedName || DEFAULT_MOCK_USER.name
+
           const authenticatedUser: User = {
-            ...DEFAULT_MOCK_USER,
-            name: extractedName || DEFAULT_MOCK_USER.name,
+            ...baseUser,
+            name: resolvedName,
             email: formattedEmail,
+            signatureName: baseUser.signatureName || resolvedName,
+            signatureUrl: baseUser.signatureUrl || createMockSignatureSvg(resolvedName),
           }
 
           useProjectsStore.getState().ensureSeedData()
@@ -96,7 +117,10 @@ export const useAuthStore = create<AuthState>()(
       },
 
       loginAsMockRole: (role) => {
-        const mockUser = MOCK_USERS_BY_ROLE[role]
+        const customSaved = get().customUsersByRole?.[role]
+        const mockUser = customSaved
+          ? { ...MOCK_USERS_BY_ROLE[role], ...customSaved }
+          : MOCK_USERS_BY_ROLE[role]
         useProjectsStore.getState().ensureSeedData()
         useMeasurementsStore.getState().ensureSeedData()
 
@@ -109,9 +133,17 @@ export const useAuthStore = create<AuthState>()(
       },
 
       updateProfile: (data) => {
-        set((state) => ({
-          user: state.user ? { ...state.user, ...data } : null,
-        }))
+        set((state) => {
+          if (!state.user) return state
+          const updatedUser: User = { ...state.user, ...data }
+          return {
+            user: updatedUser,
+            customUsersByRole: {
+              ...(state.customUsersByRole || {}),
+              [updatedUser.role]: updatedUser,
+            },
+          }
+        })
       },
 
       logout: () => {
@@ -128,6 +160,7 @@ export const useAuthStore = create<AuthState>()(
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         user: state.user,
+        customUsersByRole: state.customUsersByRole,
         isAuthenticated: state.isAuthenticated,
       }),
     }

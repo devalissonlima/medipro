@@ -1,6 +1,7 @@
 import { create } from "zustand"
 import { persist, createJSONStorage } from "zustand/middleware"
 import type {
+  CatalogItemType,
   ServiceItem,
   ServiceCategory,
   ServiceViewMode,
@@ -11,6 +12,7 @@ const INITIAL_SERVICES: ServiceItem[] = [
   {
     id: "srv-001",
     masterServiceId: "mst-001",
+    itemType: "labor",
     name: "Assentamento de Mármore Travertino",
     category: "Assentamento",
     unit: "m2",
@@ -24,6 +26,7 @@ const INITIAL_SERVICES: ServiceItem[] = [
   {
     id: "srv-002",
     masterServiceId: "mst-002",
+    itemType: "labor",
     name: "Corte em Meia Esquadria 45°",
     category: "Corte",
     unit: "m_linear",
@@ -37,6 +40,7 @@ const INITIAL_SERVICES: ServiceItem[] = [
   {
     id: "srv-003",
     masterServiceId: "mst-003",
+    itemType: "labor",
     name: "Furação e Recorte de Cuba Esculpida",
     category: "Furação",
     unit: "un",
@@ -50,6 +54,7 @@ const INITIAL_SERVICES: ServiceItem[] = [
   {
     id: "srv-004",
     masterServiceId: "mst-004",
+    itemType: "labor",
     name: "Polimento e Cristalização de Rochas",
     category: "Acabamento",
     unit: "m2",
@@ -63,6 +68,7 @@ const INITIAL_SERVICES: ServiceItem[] = [
   {
     id: "srv-005",
     masterServiceId: "mst-005",
+    itemType: "labor",
     name: "Instalação de Ilha Gourmet & Bancada",
     category: "Instalação",
     unit: "un",
@@ -76,6 +82,7 @@ const INITIAL_SERVICES: ServiceItem[] = [
   {
     id: "srv-006",
     masterServiceId: "mst-006",
+    itemType: "labor",
     name: "Revestimento Porcelanato Grandes Formatos",
     category: "Assentamento",
     unit: "m2",
@@ -86,12 +93,41 @@ const INITIAL_SERVICES: ServiceItem[] = [
     createdAt: "2026-11-06T16:10:00Z",
     updatedAt: "2026-11-06T16:10:00Z",
   },
+  {
+    id: "srv-007",
+    masterServiceId: "mst-009",
+    itemType: "material",
+    name: "Argamassa Colante AC3 Branca 20kg",
+    category: "Materiais",
+    unit: "saco",
+    basePrice: 54.0,
+    complexityTags: ["Padrão"],
+    description:
+      "Argamassa flexível de alta aderência indicada para mármores, granitos e grandes formatos.",
+    createdAt: "2026-11-07T09:00:00Z",
+    updatedAt: "2026-11-07T09:00:00Z",
+  },
+  {
+    id: "srv-008",
+    masterServiceId: "mst-011",
+    itemType: "subcontract",
+    name: "Diária de Ajudante / Auxiliar de Obra",
+    category: "Equipe Auxiliar",
+    unit: "diaria",
+    basePrice: 160.0,
+    complexityTags: ["Padrão"],
+    description:
+      "Apoio logístico no transporte de peças, preparo de massa e limpeza fina pós-montagem.",
+    createdAt: "2026-11-07T10:00:00Z",
+    updatedAt: "2026-11-07T10:00:00Z",
+  },
 ]
 
 interface ServicesState {
   services: ServiceItem[]
   searchTerm: string
   selectedCategory: ServiceCategory | "Todas"
+  selectedItemType: CatalogItemType | "all"
   viewMode: ServiceViewMode
   isFormOpen: boolean
   editingService: ServiceItem | null
@@ -100,6 +136,7 @@ interface ServicesState {
   // Ações
   setSearchTerm: (term: string) => void
   setSelectedCategory: (category: ServiceCategory | "Todas") => void
+  setSelectedItemType: (itemType: CatalogItemType | "all") => void
   setViewMode: (mode: ServiceViewMode) => void
   openCreateModal: () => void
   openEditModal: (service: ServiceItem) => void
@@ -126,6 +163,7 @@ export const useServicesStore = create<ServicesState>()(
       services: INITIAL_SERVICES,
       searchTerm: "",
       selectedCategory: "Todas",
+      selectedItemType: "all",
       viewMode: "grid",
       isFormOpen: false,
       editingService: null,
@@ -134,6 +172,8 @@ export const useServicesStore = create<ServicesState>()(
       setSearchTerm: (searchTerm) => set({ searchTerm }),
 
       setSelectedCategory: (selectedCategory) => set({ selectedCategory }),
+
+      setSelectedItemType: (selectedItemType) => set({ selectedItemType }),
 
       setViewMode: (viewMode) => set({ viewMode }),
 
@@ -162,13 +202,14 @@ export const useServicesStore = create<ServicesState>()(
           const now = new Date().toISOString()
           const newService: ServiceItem = {
             ...data,
+            itemType: data.itemType || "labor",
             id: `srv-${Date.now().toString(36)}`,
             createdAt: now,
             updatedAt: now,
           }
-          const msg = `Serviço "${newService.name}" cadastrado com sucesso!`
+          const msg = `Item "${newService.name}" cadastrado com sucesso!`
           toast({
-            title: "Serviço Cadastrado",
+            title: "Item Cadastrado",
             description: msg,
             variant: "success",
           })
@@ -189,6 +230,7 @@ export const useServicesStore = create<ServicesState>()(
           const now = new Date().toISOString()
           const imported: ServiceItem[] = newItems.map((item, idx) => ({
             ...item,
+            itemType: item.itemType || "labor",
             id: `srv-imp-${Date.now().toString(36)}-${idx}`,
             createdAt: now,
             updatedAt: now,
@@ -196,11 +238,11 @@ export const useServicesStore = create<ServicesState>()(
 
           const count = imported.length
           const msg = `${count} ${
-            count === 1 ? "serviço importado e adicionado" : "serviços importados e adicionados"
+            count === 1 ? "item importado e adicionado" : "itens importados e adicionados"
           } ao seu catálogo!`
 
           toast({
-            title: "Serviços Importados",
+            title: "Itens Importados",
             description: msg,
             variant: "success",
           })
@@ -218,11 +260,18 @@ export const useServicesStore = create<ServicesState>()(
         set((state) => {
           const now = new Date().toISOString()
           const updatedServices = state.services.map((item) =>
-            item.id === id ? { ...item, ...data, updatedAt: now } : item
+            item.id === id
+              ? {
+                  ...item,
+                  ...data,
+                  itemType: data.itemType ?? item.itemType ?? "labor",
+                  updatedAt: now,
+                }
+              : item
           )
-          const msg = "Serviço atualizado com sucesso!"
+          const msg = "Item atualizado com sucesso!"
           toast({
-            title: "Serviço Atualizado",
+            title: "Catálogo Atualizado",
             description: msg,
             variant: "success",
           })
@@ -241,10 +290,10 @@ export const useServicesStore = create<ServicesState>()(
         set((state) => {
           const serviceToDelete = state.services.find((s) => s.id === id)
           const msg = serviceToDelete
-            ? `Serviço "${serviceToDelete.name}" removido.`
-            : "Serviço removido com sucesso."
+            ? `Item "${serviceToDelete.name}" removido.`
+            : "Item removido com sucesso."
           toast({
-            title: "Serviço Removido",
+            title: "Item Removido",
             description: msg,
             variant: "destructive",
           })
@@ -264,6 +313,25 @@ export const useServicesStore = create<ServicesState>()(
         services: state.services,
         viewMode: state.viewMode,
       }),
+      merge: (persistedState, currentState) => {
+        const persisted = persistedState as Partial<ServicesState> | undefined
+        if (!persisted?.services) {
+          return currentState
+        }
+        const migrated = persisted.services.map((s) => ({
+          ...s,
+          itemType: s.itemType || "labor",
+        }))
+        const existingIds = new Set(migrated.map((s) => s.id))
+        const missingSeeds = INITIAL_SERVICES.filter(
+          (seed) => !existingIds.has(seed.id)
+        )
+        return {
+          ...currentState,
+          ...persisted,
+          services: [...migrated, ...missingSeeds],
+        }
+      },
     }
   )
 )

@@ -4,7 +4,7 @@ export function getFolderUrl(folderId: string): string {
 
 export function getProjectUrl(
   project: { id: string; folderId?: string | null },
-  tab: "dashboard" | "medicoes" | "equipe" = "dashboard"
+  tab: "dashboard" | "medicoes" | "orcamentos" | "equipe" = "dashboard"
 ): string {
   if (project.folderId) {
     return `/projetos/${project.folderId}/${project.id}/${tab}`
