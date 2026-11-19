@@ -10,40 +10,33 @@ import type { TeamMember } from "@/types/team"
 
 interface TeamTableProps {
   members: TeamMember[]
-  onEdit: (member: TeamMember) => void
-  onToggleStatus: (id: string) => void
   onResendInvite: (id: string) => void
   onDelete: (id: string) => void
 }
 
 export function TeamTable({
   members,
-  onEdit,
-  onToggleStatus,
   onResendInvite,
   onDelete,
 }: TeamTableProps) {
   return (
-    <div className="rounded-xl border border-slate-200/90 bg-white overflow-hidden shadow-xs">
-      <Table>
+    <div className="rounded-xl border border-slate-200/90 bg-white overflow-x-auto shadow-2xs">
+      <Table className="min-w-[680px]">
         <TableHeader className="bg-slate-50/80">
           <TableRow className="border-b border-slate-200">
             <TableHead className="font-semibold text-slate-700 text-xs">
-              Colaborador
-            </TableHead>
-            <TableHead className="font-semibold text-slate-700 text-xs w-44">
-              Função / Cargo
+              Usuário
             </TableHead>
             <TableHead className="font-semibold text-slate-700 text-xs w-40">
-              Contato WhatsApp
+              Tipo de Conta
             </TableHead>
-            <TableHead className="font-semibold text-slate-700 text-xs w-36 text-right">
-              Produção (Mês)
+            <TableHead className="font-semibold text-slate-700 text-xs w-44 text-center">
+              Status do Acesso
             </TableHead>
-            <TableHead className="font-semibold text-slate-700 text-xs w-36 text-center">
-              Status Acesso
+            <TableHead className="font-semibold text-slate-700 text-xs w-40">
+              Data
             </TableHead>
-            <TableHead className="font-semibold text-slate-700 text-xs w-32 text-center">
+            <TableHead className="font-semibold text-slate-700 text-xs w-48 text-right">
               Ações
             </TableHead>
           </TableRow>
@@ -54,8 +47,6 @@ export function TeamTable({
             <TeamMemberRow
               key={member.id}
               member={member}
-              onEdit={onEdit}
-              onToggleStatus={onToggleStatus}
               onResendInvite={onResendInvite}
               onDelete={onDelete}
             />

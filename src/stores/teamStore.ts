@@ -1,253 +1,204 @@
 import { create } from "zustand"
 import { persist, createJSONStorage } from "zustand/middleware"
-import type { TeamMember, TeamPlanUsage } from "@/types/team"
+import { toast } from "@/components/ui/use-toast"
+import type { UserPlan } from "@/types/auth"
+import {
+  PLAN_LICENSE_LIMITS,
+  type TeamMember,
+  type TeamMemberCreateInput,
+  type TeamPlanUsage,
+} from "@/types/team"
 
 const INITIAL_MEMBERS: TeamMember[] = [
   {
     id: "colab-001",
-    name: "Lucas Ferraz",
-    email: "lucas.ferraz@medipro.com.br",
-    phone: "(11) 98765-4321",
-    role: "Instalador de Mármore",
-    status: "active",
-    avatarUrl:
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
-    baseRate: 150.0,
-    monthlyMeasurementsCount: 0,
-    monthlyTotalBilled: 0,
-    createdAt: "2026-10-01T10:00:00Z",
-    lastActive: "Hoje às 14:32",
-  },
-  {
-    id: "colab-002",
+    tenantId: "tenant_01",
     name: "Marcos Oliveira",
     email: "marcos.oliveira@medipro.com.br",
-    phone: "(11) 99123-4567",
-    role: "Acabador",
+    accountType: "PROJECT_SUPERVISOR",
     status: "active",
     avatarUrl:
       "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
-    baseRate: 120.0,
-    monthlyMeasurementsCount: 0,
-    monthlyTotalBilled: 0,
-    createdAt: "2026-10-15T09:30:00Z",
-    lastActive: "Ontem às 18:20",
+    invitedAt: "2026-10-01T10:00:00Z",
+    activatedAt: "2026-10-01T10:15:00Z",
+    createdAt: "2026-10-01T10:00:00Z",
+  },
+  {
+    id: "colab-002",
+    tenantId: "tenant_01",
+    name: "Lucas Ferraz",
+    email: "lucas.ferraz@medipro.com.br",
+    accountType: "MEMBER",
+    status: "active",
+    avatarUrl:
+      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+    invitedAt: "2026-10-05T09:30:00Z",
+    activatedAt: "2026-10-05T09:42:00Z",
+    createdAt: "2026-10-05T09:30:00Z",
   },
   {
     id: "colab-003",
+    tenantId: "tenant_01",
     name: "Tiago Santos",
     email: "tiago.santos@medipro.com.br",
-    phone: "(11) 97654-3210",
-    role: "Revestidor",
+    accountType: "MEMBER",
     status: "active",
     avatarUrl:
       "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=150&auto=format&fit=crop&q=80",
-    baseRate: 130.0,
-    monthlyMeasurementsCount: 0,
-    monthlyTotalBilled: 0,
+    invitedAt: "2026-10-20T11:00:00Z",
+    activatedAt: "2026-10-20T11:18:00Z",
     createdAt: "2026-10-20T11:00:00Z",
-    lastActive: "Hoje às 11:15",
   },
   {
     id: "colab-004",
+    tenantId: "tenant_01",
     name: "Rafael Silveira",
     email: "rafael.silveira@medipro.com.br",
-    phone: "(19) 98877-1122",
-    role: "Marceneiro",
-    status: "pending_invite",
+    accountType: "MEMBER",
+    status: "invite_sent",
     avatarUrl:
       "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80",
-    baseRate: 140.0,
-    monthlyMeasurementsCount: 0,
-    monthlyTotalBilled: 0,
-    createdAt: "2026-11-04T16:00:00Z",
-    lastActive: "Aguardando ativação",
+    invitedAt: "2026-11-18T16:00:00Z",
+    createdAt: "2026-11-18T16:00:00Z",
   },
 ]
 
 interface TeamState {
   members: TeamMember[]
-  maxLicenses: number
-  planName: string
   isInviteModalOpen: boolean
   isLimitDialogOpen: boolean
-  editingMember: TeamMember | null
-  notification: { message: string; type: "success" | "info" | "error" } | null
 
-  // Ações
-  getPlanUsage: () => TeamPlanUsage
-  openInviteModal: () => void
-  openEditModal: (member: TeamMember) => void
+  getPlanUsage: (tenantId?: string, plan?: UserPlan) => TeamPlanUsage
+  openInviteModal: (tenantId?: string, plan?: UserPlan) => void
   closeModals: () => void
-  addMember: (
-    data: Omit<
-      TeamMember,
-      "id" | "monthlyMeasurementsCount" | "monthlyTotalBilled" | "createdAt"
-    >
-  ) => boolean
-  updateMember: (id: string, data: Partial<TeamMember>) => void
-  deleteMember: (id: string) => void
-  toggleMemberStatus: (id: string) => void
+  createMemberInvite: (
+    data: TeamMemberCreateInput,
+    tenantId: string,
+    plan?: UserPlan
+  ) => { success: boolean; error?: string }
   resendInvite: (id: string) => void
-  setNotification: (
-    notification: { message: string; type: "success" | "info" | "error" } | null
-  ) => void
+  deleteMember: (id: string) => void
 }
 
 export const useTeamStore = create<TeamState>()(
   persist(
     (set, get) => ({
       members: INITIAL_MEMBERS,
-      maxLicenses: 5,
-      planName: "Plano Pro",
       isInviteModalOpen: false,
       isLimitDialogOpen: false,
-      editingMember: null,
-      notification: null,
 
-      getPlanUsage: () => {
-        const { members, maxLicenses, planName } = get()
-        // Licenças ocupadas = colaboradores ativos ou com convite pendente
-        const usedLicenses = members.filter((m) => m.status !== "inactive").length
+      getPlanUsage: (tenantId = "tenant_01", plan = "Plano Pro") => {
+        const tenantMembers = get().members.filter(
+          (m) => m.tenantId === tenantId
+        )
+        const maxLicenses = PLAN_LICENSE_LIMITS[plan] ?? 5
         return {
-          usedLicenses,
+          usedLicenses: tenantMembers.length,
           maxLicenses,
-          planName,
+          planName: plan,
         }
       },
 
-      openInviteModal: () => {
-        const { usedLicenses, maxLicenses } = get().getPlanUsage()
+      openInviteModal: (tenantId = "tenant_01", plan = "Plano Pro") => {
+        const { usedLicenses, maxLicenses } = get().getPlanUsage(tenantId, plan)
         if (usedLicenses >= maxLicenses) {
-          // Limite do plano atingido -> abre modal de upsell
-          set({ isLimitDialogOpen: true, isInviteModalOpen: false, editingMember: null })
+          set({ isLimitDialogOpen: true, isInviteModalOpen: false })
         } else {
-          set({ isInviteModalOpen: true, isLimitDialogOpen: false, editingMember: null })
+          set({ isInviteModalOpen: true, isLimitDialogOpen: false })
         }
-      },
-
-      openEditModal: (member) => {
-        set({
-          isInviteModalOpen: true,
-          isLimitDialogOpen: false,
-          editingMember: member,
-        })
       },
 
       closeModals: () => {
         set({
           isInviteModalOpen: false,
           isLimitDialogOpen: false,
-          editingMember: null,
         })
       },
 
-      addMember: (data) => {
-        const { usedLicenses, maxLicenses } = get().getPlanUsage()
+      createMemberInvite: (data, tenantId, plan = "Plano Pro") => {
+        const { usedLicenses, maxLicenses } = get().getPlanUsage(tenantId, plan)
         if (usedLicenses >= maxLicenses) {
           set({ isLimitDialogOpen: true, isInviteModalOpen: false })
-          return false
+          return {
+            success: false,
+            error: "Limite de licenças do plano atingido.",
+          }
+        }
+
+        const normalizedEmail = data.email.trim().toLowerCase()
+        const duplicate = get().members.some(
+          (m) =>
+            m.tenantId === tenantId &&
+            m.email.toLowerCase() === normalizedEmail
+        )
+        if (duplicate) {
+          return {
+            success: false,
+            error: "Já existe um membro cadastrado ou convidado com este e-mail.",
+          }
         }
 
         const now = new Date().toISOString()
         const newMember: TeamMember = {
-          ...data,
           id: `colab-${Date.now().toString(36)}`,
-          status: "pending_invite",
-          monthlyMeasurementsCount: 0,
-          monthlyTotalBilled: 0,
+          tenantId,
+          name: data.name.trim(),
+          email: normalizedEmail,
+          accountType: data.accountType,
+          status: "invite_sent",
+          invitedAt: now,
           createdAt: now,
-          lastActive: "Aguardando ativação",
         }
 
         set((state) => ({
           members: [newMember, ...state.members],
           isInviteModalOpen: false,
-          notification: {
-            message: `Convite enviado com sucesso para ${newMember.name}!`,
-            type: "success",
-          },
         }))
 
-        return true
-      },
+        toast({
+          title: "Convite Enviado",
+          description: `${newMember.name} foi adicionado à lista. As credenciais temporárias e o código MFA serão enviados para ${newMember.email}.`,
+          variant: "success",
+        })
 
-      updateMember: (id, data) => {
-        set((state) => ({
-          members: state.members.map((m) => (m.id === id ? { ...m, ...data } : m)),
-          isInviteModalOpen: false,
-          editingMember: null,
-          notification: {
-            message: "Dados do colaborador atualizados!",
-            type: "success",
-          },
-        }))
-      },
-
-      deleteMember: (id) => {
-        const member = get().members.find((m) => m.id === id)
-        set((state) => ({
-          members: state.members.filter((m) => m.id !== id),
-          notification: {
-            message: member
-              ? `${member.name} foi removido da equipe.`
-              : "Colaborador removido da equipe.",
-            type: "info",
-          },
-        }))
-      },
-
-      toggleMemberStatus: (id) => {
-        const member = get().members.find((m) => m.id === id)
-        if (!member) return
-
-        const newStatus = member.status === "inactive" ? "active" : "inactive"
-
-        // Se estiver ativando, checar se há licença disponível
-        if (newStatus === "active") {
-          const { usedLicenses, maxLicenses } = get().getPlanUsage()
-          if (usedLicenses >= maxLicenses) {
-            set({
-              isLimitDialogOpen: true,
-              notification: {
-                message: "Limite de licenças atingido. Faça upgrade para reativar este membro.",
-                type: "error",
-              },
-            })
-            return
-          }
-        }
-
-        set((state) => ({
-          members: state.members.map((m) =>
-            m.id === id ? { ...m, status: newStatus } : m
-          ),
-          notification: {
-            message:
-              newStatus === "active"
-                ? `Acesso de ${member.name} reativado.`
-                : `Acesso de ${member.name} suspenso (licença liberada).`,
-            type: "info",
-          },
-        }))
+        return { success: true }
       },
 
       resendInvite: (id) => {
         const member = get().members.find((m) => m.id === id)
         if (!member) return
 
-        set({
-          notification: {
-            message: `Link de acesso reenviado para ${member.phone}!`,
-            type: "success",
-          },
+        const now = new Date().toISOString()
+        set((state) => ({
+          members: state.members.map((m) =>
+            m.id === id ? { ...m, invitedAt: now } : m
+          ),
+        }))
+
+        toast({
+          title: "Convite Reenviado",
+          description: `Um novo e-mail com senha temporária e código MFA foi disparado para ${member.email}.`,
+          variant: "success",
         })
       },
 
-      setNotification: (notification) => set({ notification }),
+      deleteMember: (id) => {
+        const member = get().members.find((m) => m.id === id)
+        set((state) => ({
+          members: state.members.filter((m) => m.id !== id),
+        }))
+
+        toast({
+          title: "Membro Removido",
+          description: member
+            ? `${member.name} foi excluído da equipe e a vaga do plano foi liberada.`
+            : "Membro removido da equipe.",
+          variant: "destructive",
+        })
+      },
     }),
     {
-      name: "@medipro:team-data-v2",
+      name: "@medipro:team-data-v3",
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         members: state.members,

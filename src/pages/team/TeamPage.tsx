@@ -1,6 +1,4 @@
-import {
-  HardHat,
-} from "lucide-react"
+import { Users } from "lucide-react"
 import { PageContainer } from "@/components/shared/PageContainer"
 import { PageHeader } from "@/components/shared/PageHeader"
 import { Badge } from "@/components/ui/badge"
@@ -23,31 +21,31 @@ export function TeamPage() {
     setStatusFilter,
     statusCounts,
     openInviteModal,
-    openEditModal,
     deleteMember,
-    toggleMemberStatus,
     resendInvite,
     clearFilters,
   } = useTeamMembers()
 
   return (
     <PageContainer className="space-y-6 pb-24">
-      {/* Cabeçalho da Equipe */}
       <PageHeader
         title="Minha Equipe"
-        description="Gestão de instaladores, revestidores e ajudantes de campo. Controle de acessos e monitoramento de capacidade de licenças."
+        description="Crie acessos para Supervisores e Membros da sua empresa conforme a capacidade de licenças do plano."
         badge={
-          <Badge variant="outline" className="text-blue-800 bg-blue-50 border-blue-300 gap-1.5 font-semibold text-xs">
-            <HardHat className="h-3.5 w-3.5 text-blue-600" />
-            Recursos Humanos & Obra
+          <Badge
+            variant="outline"
+            className="text-blue-800 bg-blue-50 border-blue-300 gap-1.5 font-semibold text-xs"
+          >
+            <Users className="h-3.5 w-3.5 text-blue-600" />
+            Gestão de Acessos &amp; Plano
           </Badge>
         }
       />
 
-      {/* 1. Barra de Capacidade e Licenças do Plano */}
+      {/* Barra de Capacidade e Licenças do Plano */}
       <TeamUsageBanner usage={planUsage} />
 
-      {/* 2. Filtros e Ações de Busca */}
+      {/* Busca, Filtros e Botão Novo Membro */}
       <TeamFilters
         searchQuery={searchQuery}
         statusFilter={statusFilter}
@@ -59,7 +57,7 @@ export function TeamPage() {
         onClearFilters={clearFilters}
       />
 
-      {/* 3. Tabela de Membros ou Estado Vazio */}
+      {/* Tabela de Listagem ou Estado Vazio */}
       {members.length === 0 ? (
         <TeamEmptyState
           onClearFilters={clearFilters}
@@ -70,27 +68,25 @@ export function TeamPage() {
         <div className="space-y-2">
           <div className="flex items-center justify-between px-1">
             <span className="text-xs font-semibold text-slate-500">
-              Profissionais Cadastrados ({members.length})
+              Usuários Listados ({members.length})
             </span>
             <span className="text-xs text-slate-400">
-              Total de membros: {allMembers.length}
+              Total vinculado ao plano: {allMembers.length}
             </span>
           </div>
 
           <TeamTable
             members={members}
-            onEdit={openEditModal}
-            onToggleStatus={toggleMemberStatus}
             onResendInvite={resendInvite}
             onDelete={deleteMember}
           />
         </div>
       )}
 
-      {/* Modal de Convidar / Editar Colaborador */}
+      {/* Modal de Cadastro de Novo Membro */}
       <InviteMemberModal />
 
-      {/* Modal de Limite Atingido (Upsell para /plano) */}
+      {/* Diálogo de Limite Atingido */}
       <LimitReachedDialog />
     </PageContainer>
   )

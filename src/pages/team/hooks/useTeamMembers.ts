@@ -1,79 +1,87 @@
 import { useState, useMemo } from "react"
+import { useAuthStore } from "@/stores/authStore"
 import { useTeamStore } from "@/stores/teamStore"
-import type { MemberStatus } from "@/types/team"
+import {
+  PLAN_LICENSE_LIMITS,
+  TEAM_ACCOUNT_TYPE_CONFIG,
+  type TeamMemberStatus,
+} from "@/types/team"
 
 export function useTeamMembers() {
+  const user = useAuthStore((state) => state.user)
+  const tenantId = user?.tenantId || "tenant_01"
+  const plan = user?.plano || "Plano Pro"
+
   const {
     members,
-    getPlanUsage,
     isInviteModalOpen,
     isLimitDialogOpen,
-    editingMember,
-    notification,
     openInviteModal,
-    openEditModal,
     closeModals,
     deleteMember,
-    toggleMemberStatus,
     resendInvite,
-    setNotification,
   } = useTeamStore()
 
   const [searchQuery, setSearchQuery] = useState("")
-  const [statusFilter, setStatusFilter] = useState<MemberStatus | "all">("all")
+  const [statusFilter, setStatusFilter] = useState<TeamMemberStatus | "all">(
+    "all"
+  )
 
-  // Uso do plano e capacidade
+  const tenantMembers = useMemo(
+    () => members.filter((m) => m.tenantId === tenantId),
+    [members, tenantId]
+  )
+
   const planUsage = useMemo(() => {
-    const usage = getPlanUsage()
+    const usedLicenses = tenantMembers.length
+    const maxLicenses = PLAN_LICENSE_LIMITS[plan] ?? 5
     const percentage = Math.min(
       100,
-      Math.round((usage.usedLicenses / usage.maxLicenses) * 100)
+      Math.round((usedLicenses / maxLicenses) * 100)
     )
-    const isAtLimit = usage.usedLicenses >= usage.maxLicenses
-    const isNearLimit = percentage >= 80
+    const isAtLimit = usedLicenses >= maxLicenses
+    const isNearLimit = !isAtLimit && percentage >= 80
 
     return {
-      ...usage,
+      usedLicenses,
+      maxLicenses,
+      planName: plan,
       percentage,
       isAtLimit,
       isNearLimit,
     }
-  }, [members, getPlanUsage])
+  }, [tenantMembers.length, plan])
 
-  // Filtragem combinada
   const filteredMembers = useMemo(() => {
-    return members.filter((m) => {
-      // Filtro de status
-      if (statusFilter !== "all" && m.status !== statusFilter) {
+    return tenantMembers.filter((member) => {
+      if (statusFilter !== "all" && member.status !== statusFilter) {
         return false
       }
 
-      // Busca textual
       if (searchQuery.trim() !== "") {
         const query = searchQuery.toLowerCase()
-        const matchesName = m.name.toLowerCase().includes(query)
-        const matchesEmail = m.email.toLowerCase().includes(query)
-        const matchesPhone = m.phone.includes(query)
-        const matchesRole = m.role.toLowerCase().includes(query)
+        const accountLabel =
+          TEAM_ACCOUNT_TYPE_CONFIG[member.accountType]?.label.toLowerCase() || ""
+        const matchesName = member.name.toLowerCase().includes(query)
+        const matchesEmail = member.email.toLowerCase().includes(query)
+        const matchesRole = accountLabel.includes(query)
 
-        if (!matchesName && !matchesEmail && !matchesPhone && !matchesRole) {
+        if (!matchesName && !matchesEmail && !matchesRole) {
           return false
         }
       }
 
       return true
     })
-  }, [members, statusFilter, searchQuery])
+  }, [tenantMembers, statusFilter, searchQuery])
 
-  // Contagens por status
   const statusCounts = useMemo(() => {
     return {
-      all: members.length,
-      active: members.filter((m) => m.status === "active").length,
-      pending_invite: members.filter((m) => m.status === "pending_invite").length,
-      inactive: members.filter((m) => m.status === "inactive").length,
+      all: tenantMembers.length,
+      invite_sent: tenantMembers.filter((m) => m.status === "invite_sent").length,
+      active: tenantMembers.filter((m) => m.status === "active").length,
     }
-  }, [members])
+  }, [tenantMembers])
 
   const clearFilters = () => {
     setSearchQuery("")
@@ -82,7 +90,7 @@ export function useTeamMembers() {
 
   return {
     members: filteredMembers,
-    allMembers: members,
+    allMembers: tenantMembers,
     planUsage,
     searchQuery,
     setSearchQuery,
@@ -91,15 +99,10 @@ export function useTeamMembers() {
     statusCounts,
     isInviteModalOpen,
     isLimitDialogOpen,
-    editingMember,
-    notification,
-    openInviteModal,
-    openEditModal,
+    openInviteModal: () => openInviteModal(tenantId, plan),
     closeModals,
     deleteMember,
-    toggleMemberStatus,
     resendInvite,
     clearFilters,
-    dismissNotification: () => setNotification(null),
   }
 }

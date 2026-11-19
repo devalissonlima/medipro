@@ -7,6 +7,7 @@ import {
   Building2,
   CreditCard,
   ReceiptText,
+  Users,
 } from "lucide-react"
 import type { NavItem } from "@/types/navigation"
 import type { UserRole } from "@/types/auth"
@@ -59,6 +60,13 @@ export const NAVIGATION_ITEMS: NavItem[] = [
     href: "/dashboard",
     icon: TrendingUp,
     description: "Indicadores financeiros e aprovação",
+    allowedRoles: ["MASTER", "MANAGER"],
+  },
+  {
+    title: "Minha Equipe",
+    href: "/equipe",
+    icon: Users,
+    description: "Gestão de acessos, convites e limites do plano",
     allowedRoles: ["MASTER", "MANAGER"],
   },
   {

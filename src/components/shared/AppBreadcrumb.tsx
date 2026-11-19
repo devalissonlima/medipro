@@ -30,6 +30,8 @@ export function AppBreadcrumb() {
 
   if (first === "dashboard") {
     items.push({ label: "Dashboard", isCurrent: true })
+  } else if (first === "equipe") {
+    items.push({ label: "Minha Equipe", isCurrent: true })
   } else if (first === "servicos") {
     items.push({ label: "Serviços", isCurrent: true })
   } else if (first === "clientes") {

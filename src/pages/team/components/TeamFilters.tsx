@@ -1,15 +1,15 @@
 import { Search, X, UserPlus } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import type { MemberStatus } from "@/types/team"
+import type { TeamMemberStatus } from "@/types/team"
 
 interface TeamFiltersProps {
   searchQuery: string
-  statusFilter: MemberStatus | "all"
-  statusCounts: Record<string, number>
+  statusFilter: TeamMemberStatus | "all"
+  statusCounts: Record<"all" | TeamMemberStatus, number>
   isAtLimit: boolean
   onSearchChange: (q: string) => void
-  onStatusChange: (s: MemberStatus | "all") => void
+  onStatusChange: (s: TeamMemberStatus | "all") => void
   onOpenInvite: () => void
   onClearFilters: () => void
 }
@@ -24,23 +24,21 @@ export function TeamFilters({
   onOpenInvite,
   onClearFilters,
 }: TeamFiltersProps) {
-  const statusOptions: { label: string; value: MemberStatus | "all" }[] = [
+  const statusOptions: { label: string; value: TeamMemberStatus | "all" }[] = [
     { label: "Todos", value: "all" },
+    { label: "Convite Enviado", value: "invite_sent" },
     { label: "Ativos", value: "active" },
-    { label: "Pendentes (Convite)", value: "pending_invite" },
-    { label: "Inativos / Pausados", value: "inactive" },
   ]
 
   const hasActiveFilters = searchQuery !== "" || statusFilter !== "all"
 
   return (
     <div className="space-y-3.5 bg-white p-4 rounded-xl border border-slate-200/90 shadow-2xs">
-      {/* Linha Superior: Busca + Botão Convidar */}
       <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400 pointer-events-none" />
           <Input
-            placeholder="Buscar por nome, cargo, e-mail ou WhatsApp..."
+            placeholder="Buscar por nome, e-mail ou tipo de conta..."
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             className="pl-9 pr-8 h-9 text-xs bg-slate-50/50 focus:bg-white"
@@ -62,18 +60,17 @@ export function TeamFilters({
         <Button
           type="button"
           onClick={onOpenInvite}
-          className={`gap-2 text-xs font-semibold h-9 px-4 shadow-sm ${
+          className={`gap-2 text-xs font-semibold h-9 px-4 shadow-xs ${
             isAtLimit
               ? "bg-amber-600 hover:bg-amber-700 text-white"
               : "bg-slate-900 hover:bg-slate-800 text-white"
           }`}
         >
-          <UserPlus className="h-4 w-4" />
-          <span>Convidar Colaborador</span>
+          <UserPlus className="h-4 w-4 text-amber-400" />
+          <span>Novo Membro</span>
         </Button>
       </div>
 
-      {/* Linha Inferior: Abas de Status com Contadores + Botão Limpar Filtros */}
       <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-100">
         <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
           {statusOptions.map((opt) => {
@@ -109,6 +106,7 @@ export function TeamFilters({
 
         {hasActiveFilters && (
           <Button
+            type="button"
             variant="ghost"
             size="sm"
             onClick={onClearFilters}

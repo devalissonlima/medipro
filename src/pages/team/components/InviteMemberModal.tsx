@@ -1,13 +1,10 @@
-import { useState } from "react"
 import {
   UserPlus,
   Mail,
-  Phone,
-  Briefcase,
-  DollarSign,
-  Copy,
-  Check,
-  MessageCircle,
+  ShieldCheck,
+  HardHat,
+  KeyRound,
+  AlertCircle,
 } from "lucide-react"
 import {
   Dialog,
@@ -18,255 +15,207 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
-import { Select } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { useMemberForm } from "../hooks/useMemberForm"
 import { useTeamStore } from "@/stores/teamStore"
-import type { MemberRole } from "@/types/team"
-import { MEMBER_ROLE_OPTIONS } from "@/types/team"
+import {
+  TEAM_ACCOUNT_TYPE_CONFIG,
+  TEAM_ACCOUNT_TYPE_OPTIONS,
+} from "@/types/team"
 
 export function InviteMemberModal() {
   const isInviteModalOpen = useTeamStore((state) => state.isInviteModalOpen)
-  const [copiedLink, setCopiedLink] = useState(false)
 
   const {
-    isEditing,
     name,
     setName,
     email,
     setEmail,
-    phone,
-    setPhone,
-    role,
-    setRole,
-    baseRate,
-    setBaseRate,
+    accountType,
+    setAccountType,
     errors,
-    createdInviteLink,
+    setErrors,
     handleSubmit,
     closeModals,
   } = useMemberForm()
 
-  const handleCopy = async () => {
-    if (!createdInviteLink) return
-    try {
-      if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(createdInviteLink)
-      } else {
-        const textArea = document.createElement("textarea")
-        textArea.value = createdInviteLink
-        document.body.appendChild(textArea)
-        textArea.focus()
-        textArea.select()
-        document.execCommand("copy")
-        document.body.removeChild(textArea)
-      }
-      setCopiedLink(true)
-      setTimeout(() => setCopiedLink(false), 2500)
-    } catch {
-      setCopiedLink(true)
-    }
-  }
-
-  const handleOpenWhatsApp = () => {
-    if (!createdInviteLink) return
-    const text = encodeURIComponent(
-      `Olá ${name}! Você foi convidado para a equipe no Medipro.\n\n` +
-        `Acesse este link para ativar seu acesso de instalador e enviar medições:\n` +
-        `${createdInviteLink}\n\n` +
-        `_Medipro - Plataforma de Obras e Acabamentos_`
-    )
-    window.open(`https://api.whatsapp.com/send?phone=55${phone.replace(/\D/g, "")}&text=${text}`, "_blank")
-  }
-
   return (
-    <Dialog open={isInviteModalOpen} onOpenChange={closeModals}>
-      <DialogContent onClose={closeModals} className="max-w-md">
+    <Dialog
+      open={isInviteModalOpen}
+      onOpenChange={(open) => !open && closeModals()}
+    >
+      <DialogContent onClose={closeModals} className="max-w-lg">
         <DialogHeader>
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-700 border border-amber-200 mb-2">
-            <UserPlus className="h-6 w-6" />
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-50 text-amber-700 border border-amber-200 shrink-0">
+              <UserPlus className="h-5 w-5" />
+            </div>
+            <div>
+              <DialogTitle>Cadastrar Novo Membro</DialogTitle>
+              <DialogDescription>
+                Crie o acesso de um Supervisor ou Membro vinculado ao seu plano.
+              </DialogDescription>
+            </div>
           </div>
-          <DialogTitle>
-            {isEditing ? "Editar Colaborador" : "Convidar Novo Colaborador"}
-          </DialogTitle>
-          <DialogDescription>
-            {isEditing
-              ? "Atualize os dados de contato, especialidade e parâmetro de remuneração."
-              : "Cadastre seu liderado para que ele envie medições diretamente pelo aplicativo de campo."}
-          </DialogDescription>
         </DialogHeader>
 
-        {/* Se o convite acabou de ser criado, exibe a tela de link para compartilhamento */}
-        {createdInviteLink ? (
-          <div className="space-y-4 py-2 animate-in fade-in">
-            <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-4 space-y-1.5 text-xs text-emerald-900">
-              <span className="font-bold block text-emerald-950">
-                Convite gerado com sucesso para {name}!
+        <form onSubmit={handleSubmit} className="space-y-4 pt-1">
+          {/* Nome Completo */}
+          <div className="space-y-1.5">
+            <label
+              htmlFor="member-name"
+              className="text-xs font-semibold text-slate-700"
+            >
+              Nome Completo <span className="text-rose-500">*</span>
+            </label>
+            <Input
+              id="member-name"
+              placeholder="Ex: Carlos Eduardo da Silva"
+              value={name}
+              onChange={(e) => {
+                setName(e.target.value)
+                if (errors.name) {
+                  setErrors((prev) => ({ ...prev, name: "" }))
+                }
+              }}
+              className={`h-10 text-xs ${
+                errors.name ? "border-rose-400 focus-visible:ring-rose-400" : ""
+              }`}
+              autoFocus
+            />
+            {errors.name && (
+              <p className="text-[11px] text-rose-600 font-medium flex items-center gap-1">
+                <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                <span>{errors.name}</span>
+              </p>
+            )}
+          </div>
+
+          {/* Tipo de Conta (Supervisor / Membro) */}
+          <div className="space-y-2">
+            <span className="text-xs font-semibold text-slate-700 block">
+              Tipo de Conta <span className="text-rose-500">*</span>
+            </span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {TEAM_ACCOUNT_TYPE_OPTIONS.map((option) => {
+                const config = TEAM_ACCOUNT_TYPE_CONFIG[option]
+                const isSelected = accountType === option
+                const isSupervisor = option === "PROJECT_SUPERVISOR"
+                return (
+                  <Button
+                    key={option}
+                    type="button"
+                    variant="unstyled"
+                    size="auto"
+                    onClick={() => setAccountType(option)}
+                    className={`flex flex-col items-start text-left rounded-xl border p-3 transition-all ${
+                      isSelected
+                        ? "border-slate-900 bg-slate-900/5 ring-2 ring-amber-400/50 shadow-2xs"
+                        : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/70"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between w-full mb-1">
+                      <div className="flex items-center gap-2">
+                        <div
+                          className={`flex h-7 w-7 items-center justify-center rounded-lg ${
+                            isSupervisor
+                              ? "bg-indigo-100 text-indigo-700"
+                              : "bg-sky-100 text-sky-700"
+                          }`}
+                        >
+                          {isSupervisor ? (
+                            <ShieldCheck className="h-4 w-4" />
+                          ) : (
+                            <HardHat className="h-4 w-4" />
+                          )}
+                        </div>
+                        <span className="text-xs font-bold text-slate-900">
+                          {config.label}
+                        </span>
+                      </div>
+
+                      <span
+                        className={`h-3.5 w-3.5 rounded-full border-2 flex items-center justify-center ${
+                          isSelected
+                            ? "border-amber-600 bg-amber-500"
+                            : "border-slate-300 bg-white"
+                        }`}
+                      />
+                    </div>
+                    <p className="text-[11px] text-slate-500 leading-relaxed font-normal whitespace-normal">
+                      {config.shortDescription}
+                    </p>
+                  </Button>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* E-mail de Acesso */}
+          <div className="space-y-1.5">
+            <label
+              htmlFor="member-email"
+              className="text-xs font-semibold text-slate-700 flex items-center gap-1.5"
+            >
+              <Mail className="h-3.5 w-3.5 text-slate-400" />
+              <span>E-mail de Acesso</span>
+              <span className="text-rose-500">*</span>
+            </label>
+            <Input
+              id="member-email"
+              type="email"
+              placeholder="colaborador@empresa.com.br"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value)
+                if (errors.email) {
+                  setErrors((prev) => ({ ...prev, email: "" }))
+                }
+              }}
+              className={`h-10 text-xs ${
+                errors.email ? "border-rose-400 focus-visible:ring-rose-400" : ""
+              }`}
+            />
+            {errors.email && (
+              <p className="text-[11px] text-rose-600 font-medium flex items-center gap-1">
+                <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                <span>{errors.email}</span>
+              </p>
+            )}
+          </div>
+
+          {/* Aviso sobre envio automático de senha temporária + MFA */}
+          <div className="rounded-xl border border-amber-200/80 bg-amber-50/70 p-3.5 flex items-start gap-2.5 text-xs text-amber-950">
+            <KeyRound className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+            <div className="space-y-0.5">
+              <span className="font-bold block">
+                Ativação Segura com Senha Temporária &amp; MFA
               </span>
-              <p className="text-emerald-800">
-                O instalador poderá acessar a plataforma e enviar medições diretamente para a sua aprovação.
+              <p className="text-[11px] text-amber-900 leading-relaxed">
+                O usuário entrará na listagem com o status{" "}
+                <strong>Convite Enviado</strong>. Ele receberá por e-mail o link da plataforma, uma senha temporária e um código de confirmação MFA para liberar o acesso.
               </p>
             </div>
+          </div>
 
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-700">
-                Link de Ativação do Acesso
-              </label>
-              <div className="flex gap-2">
-                <Input
-                  readOnly
-                  value={createdInviteLink}
-                  className="text-xs font-mono bg-slate-50 select-all"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleCopy}
-                  className="shrink-0 gap-1.5 text-xs"
-                >
-                  {copiedLink ? (
-                    <>
-                      <Check className="h-4 w-4 text-emerald-600" />
-                      <span>Copiado!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="h-4 w-4 text-slate-500" />
-                      <span>Copiar</span>
-                    </>
-                  )}
-                </Button>
-              </div>
-            </div>
-
+          <DialogFooter className="pt-2 gap-2 sm:gap-0">
             <Button
               type="button"
-              onClick={handleOpenWhatsApp}
-              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs h-10 gap-2 shadow-sm"
+              variant="outline"
+              onClick={closeModals}
+              className="text-xs h-10"
             >
-              <MessageCircle className="h-4 w-4" />
-              Enviar Link no WhatsApp do Colaborador
+              Cancelar
             </Button>
-
-            <DialogFooter className="mt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={closeModals}
-                className="w-full text-xs"
-              >
-                Concluir
-              </Button>
-            </DialogFooter>
-          </div>
-        ) : (
-          /* Formulário de Cadastro / Edição */
-          <form onSubmit={handleSubmit} className="space-y-3.5">
-            {/* Nome Completo */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-700">
-                Nome Completo <span className="text-rose-500">*</span>
-              </label>
-              <Input
-                placeholder="Ex: Carlos Eduardo da Silva"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className={errors.name ? "border-rose-400 focus-visible:ring-rose-400" : ""}
-                autoFocus
-              />
-              {errors.name && (
-                <p className="text-[11px] text-rose-500 font-medium">{errors.name}</p>
-              )}
-            </div>
-
-            {/* E-mail de Acesso */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
-                <Mail className="h-3.5 w-3.5 text-slate-400" />
-                E-mail de Acesso <span className="text-rose-500">*</span>
-              </label>
-              <Input
-                type="email"
-                placeholder="colaborador@empresa.com.br"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className={errors.email ? "border-rose-400 focus-visible:ring-rose-400" : ""}
-              />
-              {errors.email && (
-                <p className="text-[11px] text-rose-500 font-medium">{errors.email}</p>
-              )}
-            </div>
-
-            {/* Telefone / WhatsApp */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
-                <Phone className="h-3.5 w-3.5 text-slate-400" />
-                Telefone / WhatsApp <span className="text-rose-500">*</span>
-              </label>
-              <Input
-                placeholder="(11) 98765-4321"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className={errors.phone ? "border-rose-400 focus-visible:ring-rose-400" : ""}
-              />
-              {errors.phone && (
-                <p className="text-[11px] text-rose-500 font-medium">{errors.phone}</p>
-              )}
-            </div>
-
-            {/* Especialidade Principal & Parâmetro Remuneração (2 cols) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
-                  <Briefcase className="h-3.5 w-3.5 text-slate-400" />
-                  Especialidade
-                </label>
-                <Select
-                  value={role}
-                  onChange={(e) => setRole(e.target.value as MemberRole)}
-                  className="h-9 text-xs"
-                >
-                  {MEMBER_ROLE_OPTIONS.map((opt) => (
-                    <option key={opt} value={opt}>
-                      {opt}
-                    </option>
-                  ))}
-                </Select>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
-                  <DollarSign className="h-3.5 w-3.5 text-slate-400" />
-                  Diária / Base (Opcional)
-                </label>
-                <Input
-                  type="number"
-                  placeholder="R$ 150,00"
-                  value={baseRate}
-                  onChange={(e) => setBaseRate(e.target.value)}
-                  className="h-9 text-xs font-mono"
-                />
-              </div>
-            </div>
-
-            <DialogFooter className="pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={closeModals}
-                className="text-xs"
-              >
-                Cancelar
-              </Button>
-              <Button
-                type="submit"
-                className="bg-slate-900 text-white hover:bg-slate-800 text-xs font-semibold"
-              >
-                {isEditing ? "Salvar Alterações" : "Gerar Acesso & Convite"}
-              </Button>
-            </DialogFooter>
-          </form>
-        )}
+            <Button
+              type="submit"
+              className="bg-slate-900 text-white hover:bg-slate-800 text-xs font-semibold h-10 px-5 gap-1.5"
+            >
+              <UserPlus className="h-4 w-4 text-amber-400" />
+              <span>Cadastrar Membro</span>
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   )

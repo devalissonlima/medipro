@@ -16,7 +16,6 @@ interface TeamUsageBannerProps {
 export function TeamUsageBanner({ usage }: TeamUsageBannerProps) {
   const navigate = useNavigate()
 
-  // Cores dinâmicas da barra de progresso
   const getProgressColor = () => {
     if (usage.isAtLimit) return "bg-rose-500"
     if (usage.isNearLimit) return "bg-amber-500"
@@ -26,33 +25,29 @@ export function TeamUsageBanner({ usage }: TeamUsageBannerProps) {
   const availableLicenses = Math.max(0, usage.maxLicenses - usage.usedLicenses)
 
   return (
-    <Card className="border-slate-200/90 bg-white shadow-xs overflow-hidden">
+    <Card className="border-slate-200/90 bg-white shadow-2xs overflow-hidden">
       <CardContent className="p-4 sm:p-5">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          {/* Lado Esquerdo: Info de Capacidade */}
-          <div className="space-y-2 flex-1 max-w-xl">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900 text-amber-400">
+          <div className="space-y-2 flex-1 max-w-xl w-full">
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900 text-amber-400 shrink-0">
                 <Users className="h-4 w-4" />
               </div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-sm font-bold text-slate-900">
-                  Capacidade de Colaboradores & Licenças
-                </h3>
-                <Badge
-                  variant="outline"
-                  className="text-[10px] bg-slate-50 text-slate-700 border-slate-300"
-                >
-                  {usage.planName}
-                </Badge>
-              </div>
+              <h3 className="text-sm font-bold text-slate-900">
+                Capacidade de Usuários &amp; Licenças do Plano
+              </h3>
+              <Badge
+                variant="outline"
+                className="text-[10px] font-semibold bg-slate-50 text-slate-700 border-slate-300"
+              >
+                {usage.planName}
+              </Badge>
             </div>
 
-            {/* Barra de Progresso Visual */}
             <div className="space-y-1">
               <div className="flex justify-between items-center text-xs">
                 <span className="font-semibold text-slate-700">
-                  {usage.usedLicenses} de {usage.maxLicenses} licenças em uso
+                  {usage.usedLicenses} de {usage.maxLicenses} vagas utilizadas
                 </span>
                 <span className="text-slate-500 font-mono text-[11px]">
                   {usage.percentage}% ocupado
@@ -67,35 +62,39 @@ export function TeamUsageBanner({ usage }: TeamUsageBannerProps) {
               </div>
             </div>
 
-            {/* Mensagem de Status */}
             <p className="text-xs text-slate-500">
               {usage.isAtLimit ? (
-                <span className="text-rose-600 font-medium flex items-center gap-1">
-                  <AlertTriangle className="h-3.5 w-3.5" />
-                  Limite máximo de licenças atingido. Faça upgrade para adicionar novos instaladores.
+                <span className="text-rose-600 font-medium flex items-center gap-1.5">
+                  <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                  Limite de licenças do plano atingido. Exclua um usuário ou faça upgrade para cadastrar novos acessos.
                 </span>
               ) : usage.isNearLimit ? (
-                <span className="text-amber-700 font-medium flex items-center gap-1">
-                  <AlertTriangle className="h-3.5 w-3.5" />
-                  Apenas {availableLicenses} licença disponível no plano atual.
+                <span className="text-amber-700 font-medium flex items-center gap-1.5">
+                  <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                  Restam apenas {availableLicenses}{" "}
+                  {availableLicenses === 1 ? "vaga disponível" : "vagas disponíveis"} no seu plano atual.
                 </span>
               ) : (
                 <span className="text-slate-600">
-                  Você ainda possui <strong>{availableLicenses} licenças livres</strong> para convidar membros.
+                  Você ainda possui{" "}
+                  <strong>
+                    {availableLicenses}{" "}
+                    {availableLicenses === 1 ? "vaga disponível" : "vagas disponíveis"}
+                  </strong>{" "}
+                  para convidar Supervisores ou Membros.
                 </span>
               )}
             </p>
           </div>
 
-          {/* Lado Direito: Ação de Upgrade / Upsell */}
-          <div className="flex items-center gap-2 shrink-0 pt-2 md:pt-0">
+          <div className="flex items-center gap-2 shrink-0 pt-1 md:pt-0">
             <Button
               type="button"
               variant="outline"
               onClick={() => navigate("/plano")}
-              className="text-xs font-semibold h-10 px-4 border-slate-300 text-slate-800 hover:bg-slate-100 gap-1.5 shadow-2xs"
+              className="text-xs font-semibold h-9 px-4 border-slate-300 text-slate-800 hover:bg-slate-100 gap-1.5 shadow-2xs"
             >
-              <span>Fazer Upgrade de Licenças</span>
+              <span>Gerenciar Plano</span>
               <ArrowUpRight className="h-4 w-4 text-slate-500" />
             </Button>
           </div>

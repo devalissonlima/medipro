@@ -18,6 +18,7 @@ import { SettingsPage } from "@/pages/settings/SettingsPage"
 import { BudgetsPage } from "@/pages/budgets/BudgetsPage"
 import { BudgetFormPage } from "@/pages/budgets/BudgetFormPage"
 import { BudgetDetailPage } from "@/pages/budgets/BudgetDetailPage"
+import { TeamPage } from "@/pages/team/TeamPage"
 import { Toaster } from "@/components/ui/toaster"
 import { NavigationHistoryTracker } from "@/components/shared/NavigationHistoryTracker"
 
@@ -118,6 +119,11 @@ export default function App() {
               <Route path="/clientes" element={<ClientsPage />} />
             </Route>
 
+            {/* Minha Equipe: Exclusivo Empresa (MANAGER e MASTER) */}
+            <Route element={<ProtectedRoute allowedRoles={["MASTER", "MANAGER"]} />}>
+              <Route path="/equipe" element={<TeamPage />} />
+            </Route>
+
             {/* Meu Plano: MANAGER, SOLO e MASTER */}
             <Route element={<ProtectedRoute allowedRoles={["MASTER", "MANAGER", "SOLO"]} />}>
               <Route path="/plano" element={<PlanPage />} />
@@ -131,7 +137,6 @@ export default function App() {
         </Route>
 
         {/* Fallback de rotas desconhecidas ou legadas */}
-        <Route path="/equipe" element={<Navigate to="/projetos" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <Toaster />
